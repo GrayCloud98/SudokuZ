@@ -10,7 +10,8 @@
     "web": "expo start --web",
     "lint": "eslint . --ext .ts,.tsx",
     "format": "prettier --write .",
-    "prepare": "husky"
+    "prepare": "husky",
+    "test": "jest"
   },
   "lint-staged": {
     "*.{ts,tsx}": [
@@ -31,14 +32,17 @@
     "react-native-web": "^0.21.0"
   },
   "devDependencies": {
+    "@types/jest": "^30.0.0",
     "@types/react": "~19.2.2",
     "@typescript-eslint/eslint-plugin": "^8.57.1",
     "@typescript-eslint/parser": "^8.57.1",
     "eslint": "^10.0.3",
     "eslint-config-prettier": "^10.1.8",
     "husky": "^9.1.7",
+    "jest": "^30.3.0",
     "lint-staged": "^16.4.0",
     "prettier": "^3.8.1",
+    "ts-jest": "^29.4.6",
     "typescript": "~5.9.2"
   },
   "private": true
