@@ -2,14 +2,24 @@
   "name": "sudoku",
   "version": "1.0.0",
   "main": "index.ts",
-  "type":"module",
+  "type": "module",
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
     "lint": "eslint . --ext .ts,.tsx",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md}": [
+      "prettier --write"
+    ]
   },
   "dependencies": {
     "@expo/metro-runtime": "~55.0.6",
@@ -26,6 +36,8 @@
     "@typescript-eslint/parser": "^8.57.1",
     "eslint": "^10.0.3",
     "eslint-config-prettier": "^10.1.8",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
     "prettier": "^3.8.1",
     "typescript": "~5.9.2"
   },
