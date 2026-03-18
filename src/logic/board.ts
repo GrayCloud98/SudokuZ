@@ -2,6 +2,17 @@ export type CellValue = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
 export type Board = CellValue[][];
 
+export interface CellMeta {
+  isGiven: boolean;
+  notes: Set<number>;
+  isError: boolean;
+}
+
+export interface GameBoard {
+  values: Board;
+  meta: CellMeta[][];
+}
+
 export const GRID_SIZE = 6;
 export const BOX_ROWS = 2;
 export const BOX_COLS = 3;
@@ -60,4 +71,17 @@ export function getBox(board: Board, row: number, col: number): CellValue[] {
     }
   }
   return cells;
+}
+
+// Wraps a raw board into a GameBoard, marking all non-zero cells as givens
+export function createGameBoard(puzzle: Board): GameBoard {
+  const values = cloneBoard(puzzle);
+  const meta: CellMeta[][] = Array.from({ length: GRID_SIZE }, (_, r) =>
+    Array.from({ length: GRID_SIZE }, (_, c) => ({
+      isGiven: puzzle[r][c] !== EMPTY,
+      notes: new Set<number>(),
+      isError: false,
+    }))
+  );
+  return { values, meta };
 }
