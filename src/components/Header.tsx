@@ -24,7 +24,12 @@ export function Header() {
     return generated;
   });
 
-  const username = isGuest ? guestUsername : (user?.user_metadata?.username ?? 'player');
+  const username = isGuest
+    ? guestUsername
+    : (user?.user_metadata?.user_name ?? // GitHub
+      user?.user_metadata?.name ?? // Google
+      user?.user_metadata?.username ?? // email signup
+      'player');
 
   const avatarLetter = username[0].toUpperCase();
   const avatarColor = getAvatarColor(username);

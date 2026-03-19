@@ -103,6 +103,10 @@ export default function LoginScreen() {
       <TouchableOpacity style={[styles.button, styles.guestButton]} onPress={continueAsGuest}>
         <Text style={styles.buttonText}>Continue as Guest</Text>
       </TouchableOpacity>
+
+      <TouchableOpacity onPress={() => router.push('/(auth)/signup')}>
+        <Text style={styles.signUpText}>Don't have an account? Sign up</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -167,5 +171,10 @@ const styles = StyleSheet.create({
   dividerText: {
     marginHorizontal: 8,
     color: '#999',
+  },
+  signUpText: {
+    marginTop: 8,
+    color: '#3ecf8e',
+    textAlign: 'center',
   },
 });
