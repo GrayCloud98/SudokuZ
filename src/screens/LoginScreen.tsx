@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,15 +7,23 @@ import {
   StyleSheet,
   ActivityIndicator,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 
 export default function LoginScreen() {
-  const { signIn, signInWithGitHub, signInWithGoogle, continueAsGuest } = useAuth();
+  const { signIn, signInWithGitHub, signInWithGoogle, continueAsGuest, isGuest } = useAuth();
+  const router = useRouter();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (isGuest) {
+      router.replace('/(game)');
+    }
+  }, [isGuest]);
 
   async function handleSignIn() {
     try {

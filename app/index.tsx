@@ -1,23 +1,26 @@
-import { Redirect } from 'expo-router';
+import { useEffect } from 'react';
+import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 
 export default function Index() {
   const { user, isGuest, isLoading } = useAuth();
+  const router = useRouter();
 
-  if (isLoading) {
-    return (
-      <View style={styles.container}>
-        <ActivityIndicator size="large" />
-      </View>
-    );
-  }
+  useEffect(() => {
+    if (isLoading) return;
+    if (user || isGuest) {
+      router.replace('/(game)');
+    } else {
+      router.replace('/(auth)/login');
+    }
+  }, [user, isGuest, isLoading]);
 
-  if (user || isGuest) {
-    return <Redirect href="/(game)" />;
-  }
-
-  return <Redirect href="/(auth)/login" />;
+  return (
+    <View style={styles.container}>
+      <ActivityIndicator size="large" />
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
