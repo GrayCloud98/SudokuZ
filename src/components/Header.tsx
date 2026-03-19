@@ -26,10 +26,10 @@ export function Header() {
 
   const username = isGuest
     ? guestUsername
-    : (user?.user_metadata?.user_name ?? // GitHub
-      user?.user_metadata?.name ?? // Google
-      user?.user_metadata?.username ?? // email signup
-      'player');
+    : (user?.user_metadata?.user_name ??
+      user?.user_metadata?.name ??
+      user?.user_metadata?.username ??
+      `player_${user?.id?.slice(0, 6) ?? Math.random().toString(36).slice(2, 8)}`);
 
   const avatarLetter = username[0].toUpperCase();
   const avatarColor = getAvatarColor(username);
