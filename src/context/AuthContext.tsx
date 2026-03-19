@@ -6,11 +6,13 @@ type AuthContextType = {
   user: User | null;
   session: Session | null;
   isLoading: boolean;
+  isGuest: boolean;
   signUp: (email: string, password: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signInWithGitHub: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
+  continueAsGuest: () => void;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -27,6 +29,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isGuest, setIsGuest] = useState<boolean>(() => {
+    return sessionStorage.getItem('isGuest') === 'true';
+  });
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -67,8 +72,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   async function signOut() {
+    sessionStorage.removeItem('isGuest');
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
+  }
+
+  function continueAsGuest() {
+    sessionStorage.setItem('isGuest', 'true');
+    setIsGuest(true);
   }
 
   return (
@@ -77,11 +88,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user,
         session,
         isLoading,
+        isGuest,
         signUp,
         signIn,
         signInWithGitHub,
         signInWithGoogle,
         signOut,
+        continueAsGuest,
       }}
     >
       {children}

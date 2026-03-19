@@ -10,7 +10,7 @@ import {
 import { useAuth } from '@/context/AuthContext';
 
 export default function LoginScreen() {
-  const { signIn, signInWithGitHub, signInWithGoogle } = useAuth();
+  const { signIn, signInWithGitHub, signInWithGoogle, continueAsGuest } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -91,6 +91,10 @@ export default function LoginScreen() {
       <TouchableOpacity style={[styles.button, styles.googleButton]} onPress={handleGoogle}>
         <Text style={styles.buttonText}>Continue with Google</Text>
       </TouchableOpacity>
+
+      <TouchableOpacity style={[styles.button, styles.guestButton]} onPress={continueAsGuest}>
+        <Text style={styles.buttonText}>Continue as Guest</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -138,6 +142,9 @@ const styles = StyleSheet.create({
   },
   googleButton: {
     backgroundColor: '#4285f4',
+  },
+  guestButton: {
+    backgroundColor: '#888',
   },
   divider: {
     flexDirection: 'row',
