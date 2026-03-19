@@ -73,8 +73,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   async function signOut() {
     sessionStorage.removeItem('isGuest');
+    sessionStorage.removeItem('guestUsername');
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
+    setIsGuest(false);
   }
 
   function continueAsGuest() {
