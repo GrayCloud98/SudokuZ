@@ -73,9 +73,10 @@ export function getBox(board: Board, row: number, col: number): CellValue[] {
   return cells;
 }
 
-// Wraps a raw board into a GameBoard, marking all non-zero cells as givens
-export function createGameBoard(puzzle: Board): GameBoard {
-  const values = cloneBoard(puzzle);
+// Wraps a raw board into a GameBoard, marking all non-zero cells as givens.
+// Pass currentBoard to restore saved progress -- givens are still derived from puzzle.
+export function createGameBoard(puzzle: Board, currentBoard?: Board): GameBoard {
+  const values = cloneBoard(currentBoard ?? puzzle);
   const meta: CellMeta[][] = Array.from({ length: GRID_SIZE }, (_, r) =>
     Array.from({ length: GRID_SIZE }, (_, c) => ({
       isGiven: puzzle[r][c] !== EMPTY,

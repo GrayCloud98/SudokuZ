@@ -5,6 +5,7 @@ import * as G from '../logic/generator';
 
 interface GameState {
   gameBoard: B.GameBoard;
+  puzzle: B.Board;
   solution: B.Board;
   selectedCell: [number, number] | null;
   isSolved: boolean;
@@ -15,12 +16,20 @@ type Action =
   | { type: 'selectCell'; row: number; col: number }
   | { type: 'placeNumber'; value: B.CellValue }
   | { type: 'erase' }
-  | { type: 'newGame'; difficulty: G.Difficulty };
+  | { type: 'newGame'; difficulty: G.Difficulty }
+  | {
+      type: 'loadGame';
+      puzzle: B.Board;
+      solution: B.Board;
+      board: B.Board;
+      difficulty: G.Difficulty;
+    };
 
 function buildInitialState(difficulty: G.Difficulty): GameState {
   const { puzzle, solution } = G.generatePuzzle(difficulty);
   return {
     gameBoard: B.createGameBoard(puzzle),
+    puzzle,
     solution,
     selectedCell: null,
     isSolved: false,
@@ -77,6 +86,15 @@ function reducer(state: GameState, action: Action): GameState {
       return buildInitialState(action.difficulty);
     }
 
+    case 'loadGame': {
+      return {
+        ...buildInitialState(action.difficulty),
+        gameBoard: B.createGameBoard(action.puzzle, action.board),
+        puzzle: action.puzzle,
+        solution: action.solution,
+        difficulty: action.difficulty,
+      };
+    }
     default:
       return state;
   }
@@ -87,6 +105,8 @@ export function useGameState(difficulty: G.Difficulty = 'medium') {
 
   return {
     gameBoard: state.gameBoard,
+    puzzle: state.puzzle,
+    solution: state.solution,
     selectedCell: state.selectedCell,
     isSolved: state.isSolved,
     difficulty: state.difficulty,
@@ -94,5 +114,7 @@ export function useGameState(difficulty: G.Difficulty = 'medium') {
     placeNumber: (value: B.CellValue) => dispatch({ type: 'placeNumber', value }),
     erase: () => dispatch({ type: 'erase' }),
     newGame: (difficulty: G.Difficulty) => dispatch({ type: 'newGame', difficulty }),
+    loadGame: (puzzle: B.Board, solution: B.Board, board: B.Board, difficulty: G.Difficulty) =>
+      dispatch({ type: 'loadGame', puzzle, solution, board, difficulty }),
   };
 }

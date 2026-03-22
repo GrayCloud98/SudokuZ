@@ -1,12 +1,17 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import * as G from '../logic/generator';
 
 interface Props {
   onNewGame: (difficulty: G.Difficulty) => void;
+  onWin: () => void;
 }
 
-export function WinScreen({ onNewGame }: Props) {
+export function WinScreen({ onNewGame, onWin }: Props) {
+  useEffect(() => {
+    onWin();
+  }, []);
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>You Won!</Text>
