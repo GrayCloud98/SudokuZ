@@ -44,6 +44,7 @@ function reducer(state: GameState, action: Action): GameState {
     }
 
     case 'placeNumber': {
+      if (state.isSolved) return state; // prevent changes if game is already solved
       if (!state.selectedCell) return state;
       const [row, col] = state.selectedCell;
 
@@ -65,6 +66,7 @@ function reducer(state: GameState, action: Action): GameState {
     }
 
     case 'erase': {
+      if (state.isSolved) return state;
       if (!state.selectedCell) return state;
       const [row, col] = state.selectedCell;
 
