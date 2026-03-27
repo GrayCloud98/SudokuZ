@@ -35,24 +35,17 @@ type PhaseGroup = {
 };
 
 const STATUS_COLORS: Record<Status, string> = {
-  todo: '#444',
-  in_progress: '#b45309',
-  done: '#166534',
-  parked: '#5b21b6',
+  todo: '#888',
+  in_progress: '#f59e0b',
+  done: '#22c55e',
+  parked: '#a78bfa',
 };
 
 const STATUS_BG: Record<Status, string> = {
-  todo: '#1a1a1a',
+  todo: '#1f1f1f',
   in_progress: '#451a03',
   done: '#052e16',
   parked: '#2e1065',
-};
-
-const STATUS_NEXT: Record<Status, Status> = {
-  todo: 'in_progress',
-  in_progress: 'done',
-  done: 'parked',
-  parked: 'todo',
 };
 
 const STATUS_LABELS: Record<Status, string> = {
@@ -73,6 +66,7 @@ const STATUS_FILTERS: { label: string; value: Status | 'all' }[] = [
 export default function AdminScreen() {
   const { isAdmin } = useAuth();
   const router = useRouter();
+
   const [items, setItems] = useState<RoadmapItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [collapsedPhases, setCollapsedPhases] = useState<Record<string, boolean>>({});
@@ -87,6 +81,7 @@ export default function AdminScreen() {
   const [newDescription, setNewDescription] = useState('');
   const [addingNewPhase, setAddingNewPhase] = useState(false);
   const [newPhaseName, setNewPhaseName] = useState('');
+  const [statusPickerItem, setStatusPickerItem] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isAdmin) router.replace('/(game)');
@@ -118,6 +113,7 @@ export default function AdminScreen() {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setExpandedItem((prev) => (prev === id ? null : id));
     setEditingItem(null);
+    setStatusPickerItem(null);
   }
 
   function startEdit(item: RoadmapItem) {
@@ -142,15 +138,13 @@ export default function AdminScreen() {
     fetchItems();
   }
 
-  async function cycleStatus(item: RoadmapItem) {
-    const { error } = await supabase
-      .from('roadmap_items')
-      .update({ status: STATUS_NEXT[item.status] })
-      .eq('id', item.id);
+  async function setStatus(item: RoadmapItem, status: Status) {
+    const { error } = await supabase.from('roadmap_items').update({ status }).eq('id', item.id);
     if (error) {
-      console.error('failed to cycle status:', error.message);
+      console.error('failed to set status:', error.message);
       return;
     }
+    setStatusPickerItem(null);
     fetchItems();
   }
 
@@ -262,39 +256,6 @@ export default function AdminScreen() {
               </Text>
             </TouchableOpacity>
           ))}
-          {/* new phase */}
-          {addingNewPhase ? (
-            <View style={[styles.phaseGroup, { padding: 16, gap: 8 }]}>
-              <TextInput
-                style={styles.editInput}
-                value={newPhaseName}
-                onChangeText={setNewPhaseName}
-                placeholder="phase name"
-                placeholderTextColor="#555"
-                autoFocus
-              />
-              <View style={styles.editActions}>
-                <TouchableOpacity
-                  style={styles.saveButton}
-                  onPress={() => {
-                    if (!newPhaseName.trim()) return;
-                    setAddingToPhase(newPhaseName.trim());
-                    setAddingNewPhase(false);
-                    setNewPhaseName('');
-                  }}
-                >
-                  <Text style={styles.saveButtonText}>create phase</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => setAddingNewPhase(false)}>
-                  <Text style={styles.cancelText}>cancel</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          ) : (
-            <TouchableOpacity style={styles.newPhaseButton} onPress={() => setAddingNewPhase(true)}>
-              <Text style={styles.newPhaseButtonText}>+ new phase</Text>
-            </TouchableOpacity>
-          )}
         </ScrollView>
       </View>
 
@@ -335,15 +296,18 @@ export default function AdminScreen() {
                     {filtered.map((item) => {
                       const isExpanded = expandedItem === item.id;
                       const isEditing = editingItem === item.id;
+                      const isPickingStatus = statusPickerItem === item.id;
+
                       return (
                         <View key={item.id} style={styles.item}>
                           <View style={styles.itemRow}>
+                            {/* status badge -- tap to open picker */}
                             <TouchableOpacity
                               style={[
                                 styles.statusBadge,
                                 { backgroundColor: STATUS_BG[item.status] },
                               ]}
-                              onPress={() => cycleStatus(item)}
+                              onPress={() => setStatusPickerItem(isPickingStatus ? null : item.id)}
                             >
                               <Text
                                 style={[styles.statusText, { color: STATUS_COLORS[item.status] }]}
@@ -351,6 +315,8 @@ export default function AdminScreen() {
                                 {STATUS_LABELS[item.status]}
                               </Text>
                             </TouchableOpacity>
+
+                            {/* title -- tap to expand */}
                             <TouchableOpacity
                               style={styles.itemTitleRow}
                               onPress={() => toggleExpand(item.id)}
@@ -367,6 +333,28 @@ export default function AdminScreen() {
                             </TouchableOpacity>
                           </View>
 
+                          {/* status picker */}
+                          {isPickingStatus && (
+                            <View style={styles.statusPicker}>
+                              {(Object.keys(STATUS_LABELS) as Status[]).map((s) => (
+                                <TouchableOpacity
+                                  key={s}
+                                  style={[
+                                    styles.statusPickerOption,
+                                    { backgroundColor: STATUS_BG[s] },
+                                    item.status === s && styles.statusPickerOptionActive,
+                                  ]}
+                                  onPress={() => setStatus(item, s)}
+                                >
+                                  <Text style={[styles.statusText, { color: STATUS_COLORS[s] }]}>
+                                    {STATUS_LABELS[s]}
+                                  </Text>
+                                </TouchableOpacity>
+                              ))}
+                            </View>
+                          )}
+
+                          {/* expanded detail */}
                           {isExpanded && (
                             <View style={styles.itemExpanded}>
                               {isEditing ? (
@@ -419,7 +407,7 @@ export default function AdminScreen() {
                       );
                     })}
 
-                    {/* add item form */}
+                    {/* add item to this phase */}
                     {addingToPhase === phase ? (
                       <View style={styles.addForm}>
                         <TextInput
@@ -462,6 +450,40 @@ export default function AdminScreen() {
               </View>
             );
           })}
+
+          {/* new phase */}
+          {addingNewPhase ? (
+            <View style={styles.newPhaseForm}>
+              <TextInput
+                style={styles.editInput}
+                value={newPhaseName}
+                onChangeText={setNewPhaseName}
+                placeholder="phase name"
+                placeholderTextColor="#555"
+                autoFocus
+              />
+              <View style={styles.editActions}>
+                <TouchableOpacity
+                  style={styles.saveButton}
+                  onPress={() => {
+                    if (!newPhaseName.trim()) return;
+                    setAddingToPhase(newPhaseName.trim());
+                    setAddingNewPhase(false);
+                    setNewPhaseName('');
+                  }}
+                >
+                  <Text style={styles.saveButtonText}>create phase</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => setAddingNewPhase(false)}>
+                  <Text style={styles.cancelText}>cancel</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          ) : (
+            <TouchableOpacity style={styles.newPhaseButton} onPress={() => setAddingNewPhase(true)}>
+              <Text style={styles.newPhaseButtonText}>+ new phase</Text>
+            </TouchableOpacity>
+          )}
         </ScrollView>
       )}
     </View>
@@ -531,7 +553,7 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   phaseGroup: {
-    marginBottom: 16,
+    marginBottom: 12,
     borderRadius: 10,
     backgroundColor: '#1a1a1a',
     overflow: 'hidden',
@@ -559,7 +581,7 @@ const styles = StyleSheet.create({
   },
   chevron: {
     color: '#555',
-    fontSize: 20,
+    fontSize: 18,
   },
   progressBar: {
     height: 2,
@@ -567,7 +589,7 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: 2,
-    backgroundColor: '#166534',
+    backgroundColor: '#22c55e',
   },
   phaseItems: {
     padding: 12,
@@ -583,6 +605,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#222',
     borderRadius: 8,
     overflow: 'hidden',
+    marginBottom: 4,
   },
   itemRow: {
     flexDirection: 'row',
@@ -592,13 +615,29 @@ const styles = StyleSheet.create({
   },
   statusBadge: {
     paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingVertical: 4,
     borderRadius: 4,
   },
   statusText: {
     fontSize: 11,
     fontWeight: '600',
     textTransform: 'uppercase',
+  },
+  statusPicker: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingBottom: 10,
+  },
+  statusPickerOption: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 4,
+  },
+  statusPickerOptionActive: {
+    borderWidth: 1,
+    borderColor: '#ffffff33',
   },
   itemTitleRow: {
     flex: 1,
@@ -609,16 +648,17 @@ const styles = StyleSheet.create({
   },
   itemTitleDone: {
     textDecorationLine: 'line-through',
-    color: '#555',
+    color: '#444',
   },
   itemExpanded: {
     paddingHorizontal: 12,
     paddingBottom: 12,
   },
   itemDescription: {
-    color: '#666',
+    color: '#555',
     fontSize: 13,
     marginBottom: 10,
+    lineHeight: 18,
   },
   itemActions: {
     flexDirection: 'row',
@@ -674,8 +714,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   addButtonText: {
-    color: '#333',
+    color: '#444',
     fontSize: 13,
+  },
+  newPhaseForm: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 10,
+    padding: 16,
+    gap: 8,
+    marginBottom: 16,
   },
   newPhaseButton: {
     paddingVertical: 16,
@@ -683,7 +730,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1,
     borderColor: '#222',
-    borderStyle: 'dashed',
     marginBottom: 16,
   },
   newPhaseButtonText: {
