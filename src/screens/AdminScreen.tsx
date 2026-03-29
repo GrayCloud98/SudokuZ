@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   LayoutAnimation,
   Platform,
   UIManager,
+  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
@@ -26,11 +27,14 @@ type RoadmapItem = {
   description: string | null;
   phase: string | null;
   status: Status;
+  sort_order: number;
   created_at: string;
 };
 
 type PhaseGroup = {
   phase: string;
+  phaseNumber: number;
+  phaseSuffix: string;
   items: RoadmapItem[];
 };
 
@@ -63,6 +67,85 @@ const STATUS_FILTERS: { label: string; value: Status | 'all' }[] = [
   { label: 'parked', value: 'parked' },
 ];
 
+function normalizePhase(phase: string | null) {
+  return phase?.trim() || 'uncategorized';
+}
+
+function parsePhase(phase: string) {
+  const normalized = normalizePhase(phase);
+  const match = normalized.match(/^Phase\s+(\d+)\s*-\s*(.+)$/i);
+
+  if (!match) {
+    return {
+      phase: normalized,
+      phaseNumber: Number.MAX_SAFE_INTEGER,
+      phaseSuffix: normalized,
+      isNumbered: false,
+    };
+  }
+
+  return {
+    phase: `Phase ${Number(match[1])} - ${match[2].trim()}`,
+    phaseNumber: Number(match[1]),
+    phaseSuffix: match[2].trim(),
+    isNumbered: true,
+  };
+}
+
+function buildPhaseName(phaseNumber: number, suffix: string) {
+  return `Phase ${phaseNumber} - ${suffix.trim()}`;
+}
+
+function sortItemsInPhase(items: RoadmapItem[]) {
+  return [...items].sort((a, b) => {
+    if (a.status === 'done' && b.status !== 'done') return 1;
+    if (a.status !== 'done' && b.status === 'done') return -1;
+    if (a.sort_order !== b.sort_order) return a.sort_order - b.sort_order;
+    return a.created_at.localeCompare(b.created_at);
+  });
+}
+
+function groupItemsByPhase(items: RoadmapItem[]) {
+  const map = new Map<string, RoadmapItem[]>();
+
+  for (const item of items) {
+    const phase = normalizePhase(item.phase);
+    const current = map.get(phase) ?? [];
+    current.push(item);
+    map.set(phase, current);
+  }
+
+  return [...map.entries()]
+    .map(([phase, phaseItems]) => {
+      const parsed = parsePhase(phase);
+
+      return {
+        phase: parsed.phase,
+        phaseNumber: parsed.phaseNumber,
+        phaseSuffix: parsed.phaseSuffix,
+        items: sortItemsInPhase(phaseItems),
+      };
+    })
+    .sort((a, b) => {
+      if (a.phaseNumber !== b.phaseNumber) return a.phaseNumber - b.phaseNumber;
+      return a.phase.localeCompare(b.phase);
+    });
+}
+
+function getNextPhaseNumber(groups: PhaseGroup[]) {
+  const numbered = groups
+    .map((group) => group.phaseNumber)
+    .filter((num) => Number.isFinite(num) && num !== Number.MAX_SAFE_INTEGER);
+
+  if (numbered.length === 0) return 0;
+  return Math.max(...numbered) + 1;
+}
+
+function getNextSortOrder(items: RoadmapItem[]) {
+  if (items.length === 0) return 0;
+  return Math.max(...items.map((item) => item.sort_order)) + 1;
+}
+
 export default function AdminScreen() {
   const { isAdmin } = useAuth();
   const router = useRouter();
@@ -80,28 +163,103 @@ export default function AdminScreen() {
   const [newTitle, setNewTitle] = useState('');
   const [newDescription, setNewDescription] = useState('');
   const [addingNewPhase, setAddingNewPhase] = useState(false);
-  const [newPhaseName, setNewPhaseName] = useState('');
+  const [newPhaseSuffix, setNewPhaseSuffix] = useState('');
   const [statusPickerItem, setStatusPickerItem] = useState<string | null>(null);
+  const [editingPhase, setEditingPhase] = useState<string | null>(null);
+  const [editPhaseSuffix, setEditPhaseSuffix] = useState('');
+  const [pendingPhase, setPendingPhase] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!isAdmin) router.replace('/(game)');
-  }, [isAdmin]);
+    if (!isAdmin) {
+      router.replace('/(game)');
+    }
+  }, [isAdmin, router]);
 
   useEffect(() => {
     fetchItems();
   }, []);
 
+  const groups = useMemo(() => {
+    const baseGroups = groupItemsByPhase(items);
+
+    if (!pendingPhase) return baseGroups;
+    if (baseGroups.some((group) => group.phase === pendingPhase)) return baseGroups;
+
+    const parsed = parsePhase(pendingPhase);
+
+    return [
+      ...baseGroups,
+      {
+        phase: parsed.phase,
+        phaseNumber: parsed.phaseNumber,
+        phaseSuffix: parsed.phaseSuffix,
+        items: [],
+      },
+    ].sort((a, b) => {
+      if (a.phaseNumber !== b.phaseNumber) return a.phaseNumber - b.phaseNumber;
+      return a.phase.localeCompare(b.phase);
+    });
+  }, [items, pendingPhase]);
+
+  const filteredGroups = useMemo(() => {
+    const phaseGroups =
+      phaseFilter === 'all' ? groups : groups.filter((g) => g.phase === phaseFilter);
+
+    return phaseGroups.map((group) => ({
+      ...group,
+      items:
+        statusFilter === 'all'
+          ? group.items
+          : group.items.filter((item) => item.status === statusFilter),
+    }));
+  }, [groups, phaseFilter, statusFilter]);
+
+  const nextPhaseNumber = useMemo(() => getNextPhaseNumber(groups), [groups]);
+
   async function fetchItems() {
+    setIsLoading(true);
+
     const { data, error } = await supabase
       .from('roadmap_items')
       .select('*')
       .order('created_at', { ascending: true });
+
     if (error) {
       console.error('failed to fetch roadmap items:', error.message);
+      setIsLoading(false);
       return;
     }
-    setItems(data);
+
+    setItems((data ?? []) as RoadmapItem[]);
     setIsLoading(false);
+  }
+
+  function resetItemEditor() {
+    setEditingItem(null);
+    setEditTitle('');
+    setEditDescription('');
+  }
+
+  function resetAddForm() {
+    if (pendingPhase && addingToPhase === pendingPhase) {
+      setPendingPhase(null);
+    }
+
+    setAddingToPhase(null);
+    setNewTitle('');
+    setNewDescription('');
+  }
+
+  function resetPhaseEditor() {
+    setEditingPhase(null);
+    setEditPhaseSuffix('');
+  }
+
+  function resetTransientUi() {
+    resetItemEditor();
+    resetAddForm();
+    resetPhaseEditor();
+    setStatusPickerItem(null);
   }
 
   function togglePhase(phase: string) {
@@ -112,7 +270,7 @@ export default function AdminScreen() {
   function toggleExpand(id: string) {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setExpandedItem((prev) => (prev === id ? null : id));
-    setEditingItem(null);
+    resetItemEditor();
     setStatusPickerItem(null);
   }
 
@@ -120,88 +278,199 @@ export default function AdminScreen() {
     setEditingItem(item.id);
     setEditTitle(item.title);
     setEditDescription(item.description ?? '');
+    setStatusPickerItem(null);
+  }
+
+  function startPhaseEdit(group: PhaseGroup) {
+    setEditingPhase(group.phase);
+    setEditPhaseSuffix(group.phaseSuffix);
+    resetAddForm();
   }
 
   async function saveEdit(item: RoadmapItem) {
+    const trimmedTitle = editTitle.trim();
+    const trimmedDescription = editDescription.trim();
+
+    if (!trimmedTitle) return;
+
     const { error } = await supabase
       .from('roadmap_items')
       .update({
-        title: editTitle.trim(),
-        description: editDescription.trim() || null,
+        title: trimmedTitle,
+        description: trimmedDescription || null,
       })
       .eq('id', item.id);
+
     if (error) {
       console.error('failed to save edit:', error.message);
       return;
     }
-    setEditingItem(null);
+
+    resetItemEditor();
+    fetchItems();
+  }
+
+  async function savePhaseEdit(group: PhaseGroup) {
+    const trimmedSuffix = editPhaseSuffix.trim();
+
+    if (!trimmedSuffix) return;
+
+    const newPhase = buildPhaseName(group.phaseNumber, trimmedSuffix);
+
+    if (newPhase === group.phase) {
+      resetPhaseEditor();
+      return;
+    }
+
+    const { error } = await supabase
+      .from('roadmap_items')
+      .update({ phase: newPhase })
+      .eq('phase', group.phase);
+
+    if (error) {
+      console.error('failed to rename phase:', error.message);
+      return;
+    }
+
+    setCollapsedPhases((prev) => {
+      const next = { ...prev };
+      if (group.phase in next) {
+        next[newPhase] = next[group.phase];
+        delete next[group.phase];
+      }
+      return next;
+    });
+
+    if (phaseFilter === group.phase) {
+      setPhaseFilter(newPhase);
+    }
+
+    if (addingToPhase === group.phase) {
+      setAddingToPhase(newPhase);
+    }
+
+    resetPhaseEditor();
     fetchItems();
   }
 
   async function setStatus(item: RoadmapItem, status: Status) {
-    const { error } = await supabase.from('roadmap_items').update({ status }).eq('id', item.id);
+    if (item.status === status) {
+      setStatusPickerItem(null);
+      return;
+    }
+
+    const updates: Partial<RoadmapItem> = { status };
+
+    if (status === 'done') {
+      const phaseItems = items.filter(
+        (i) => normalizePhase(i.phase) === normalizePhase(item.phase)
+      );
+      updates.sort_order = getNextSortOrder(phaseItems);
+    }
+
+    const { error } = await supabase.from('roadmap_items').update(updates).eq('id', item.id);
+
     if (error) {
       console.error('failed to set status:', error.message);
       return;
     }
+
     setStatusPickerItem(null);
     fetchItems();
   }
 
+  function confirmDelete(item: RoadmapItem) {
+    Alert.alert('Delete item', `Delete "${item.title}"?`, [
+      { text: 'cancel', style: 'cancel' },
+      {
+        text: 'delete',
+        style: 'destructive',
+        onPress: () => deleteItem(item.id),
+      },
+    ]);
+  }
+
   async function deleteItem(id: string) {
     const { error } = await supabase.from('roadmap_items').delete().eq('id', id);
+
     if (error) {
       console.error('failed to delete item:', error.message);
       return;
     }
+
+    if (expandedItem === id) {
+      setExpandedItem(null);
+    }
+
+    if (editingItem === id) {
+      resetItemEditor();
+    }
+
+    if (statusPickerItem === id) {
+      setStatusPickerItem(null);
+    }
+
     fetchItems();
   }
 
   async function addItem(phase: string) {
-    if (!newTitle.trim()) return;
+    const trimmedTitle = newTitle.trim();
+    const trimmedDescription = newDescription.trim();
+
+    if (!trimmedTitle) return;
+
+    const phaseItems = items.filter((item) => normalizePhase(item.phase) === phase);
+    const nextSortOrder = getNextSortOrder(phaseItems);
+
     const { error } = await supabase.from('roadmap_items').insert({
-      title: newTitle.trim(),
-      description: newDescription.trim() || null,
+      title: trimmedTitle,
+      description: trimmedDescription || null,
       phase,
       status: 'todo',
+      sort_order: nextSortOrder,
     });
+
     if (error) {
       console.error('failed to add item:', error.message);
       return;
     }
-    setNewTitle('');
-    setNewDescription('');
-    setAddingToPhase(null);
+
+    if (pendingPhase === phase) {
+      setPendingPhase(null);
+    }
+
+    resetAddForm();
     fetchItems();
   }
 
-  function getFilteredItems(phaseItems: RoadmapItem[]) {
-    if (statusFilter === 'all') return phaseItems;
-    return phaseItems.filter((i) => i.status === statusFilter);
+  function startNewPhase() {
+    resetTransientUi();
+    setAddingNewPhase(true);
   }
 
-  function groupByPhase(): PhaseGroup[] {
-    const phases = [...new Set(items.map((i) => i.phase ?? 'uncategorized'))];
-    return phases.map((phase) => ({
-      phase,
-      items: items.filter((i) => (i.phase ?? 'uncategorized') === phase),
-    }));
+  function cancelNewPhase() {
+    setAddingNewPhase(false);
+    setNewPhaseSuffix('');
   }
 
-  function phaseProgress(phaseItems: RoadmapItem[]) {
-    const done = phaseItems.filter((i) => i.status === 'done').length;
-    return { done, total: phaseItems.length };
+  function createNewPhase() {
+    const trimmedSuffix = newPhaseSuffix.trim();
+
+    if (!trimmedSuffix) return;
+
+    const phase = buildPhaseName(nextPhaseNumber, trimmedSuffix);
+
+    setAddingNewPhase(false);
+    setNewPhaseSuffix('');
+    setPendingPhase(phase);
+    setAddingToPhase(phase);
+    setCollapsedPhases((prev) => ({ ...prev, [phase]: false }));
   }
 
   if (!isAdmin) return null;
 
-  const groups = groupByPhase();
-  const filteredGroups =
-    phaseFilter === 'all' ? groups : groups.filter((g) => g.phase === phaseFilter);
-
   return (
     <View style={styles.container}>
-      {/* header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
           <Text style={styles.back}>back</Text>
@@ -209,26 +478,26 @@ export default function AdminScreen() {
         <Text style={styles.title}>admin</Text>
       </View>
 
-      {/* filters */}
       <View style={styles.filters}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterRow}>
-          {STATUS_FILTERS.map((f) => (
+          {STATUS_FILTERS.map((filter) => (
             <TouchableOpacity
-              key={f.value}
-              style={[styles.filterChip, statusFilter === f.value && styles.filterChipActive]}
-              onPress={() => setStatusFilter(f.value)}
+              key={filter.value}
+              style={[styles.filterChip, statusFilter === filter.value && styles.filterChipActive]}
+              onPress={() => setStatusFilter(filter.value)}
             >
               <Text
                 style={[
                   styles.filterChipText,
-                  statusFilter === f.value && styles.filterChipTextActive,
+                  statusFilter === filter.value && styles.filterChipTextActive,
                 ]}
               >
-                {f.label}
+                {filter.label}
               </Text>
             </TouchableOpacity>
           ))}
         </ScrollView>
+
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterRow}>
           <TouchableOpacity
             style={[styles.filterChip, phaseFilter === 'all' && styles.filterChipActive]}
@@ -240,19 +509,20 @@ export default function AdminScreen() {
               all phases
             </Text>
           </TouchableOpacity>
-          {groups.map(({ phase }) => (
+
+          {groups.map((group) => (
             <TouchableOpacity
-              key={phase}
-              style={[styles.filterChip, phaseFilter === phase && styles.filterChipActive]}
-              onPress={() => setPhaseFilter(phase)}
+              key={group.phase}
+              style={[styles.filterChip, phaseFilter === group.phase && styles.filterChipActive]}
+              onPress={() => setPhaseFilter(group.phase)}
             >
               <Text
                 style={[
                   styles.filterChipText,
-                  phaseFilter === phase && styles.filterChipTextActive,
+                  phaseFilter === group.phase && styles.filterChipTextActive,
                 ]}
               >
-                {phase}
+                {group.phase}
               </Text>
             </TouchableOpacity>
           ))}
@@ -263,37 +533,68 @@ export default function AdminScreen() {
         <Text style={styles.loading}>loading...</Text>
       ) : (
         <ScrollView style={styles.list} contentContainerStyle={styles.listContent}>
-          {filteredGroups.map(({ phase, items: phaseItems }) => {
-            const { done, total } = phaseProgress(phaseItems);
-            const filtered = getFilteredItems(phaseItems);
-            const isCollapsed = collapsedPhases[phase] ?? true;
-            const progress = total > 0 ? done / total : 0;
+          {filteredGroups.map((group) => {
+            const isCollapsed = collapsedPhases[group.phase] ?? true;
+            const doneCount = group.items.filter((item) => item.status === 'done').length;
+            const totalCount = group.items.length;
+            const visibleItems = group.items;
+            const isEditingPhase = editingPhase === group.phase;
 
             return (
-              <View key={phase} style={styles.phaseGroup}>
-                {/* phase header */}
-                <TouchableOpacity style={styles.phaseHeader} onPress={() => togglePhase(phase)}>
+              <View key={group.phase} style={styles.phaseGroup}>
+                <TouchableOpacity
+                  style={styles.phaseHeader}
+                  onPress={() => togglePhase(group.phase)}
+                >
                   <View style={styles.phaseHeaderLeft}>
-                    <Text style={styles.phaseTitle}>{phase}</Text>
+                    <Text style={styles.phaseTitle}>{group.phase}</Text>
                     <Text style={styles.phaseCount}>
-                      {done}/{total}
+                      {doneCount}/{totalCount}
                     </Text>
                   </View>
                   <Text style={styles.chevron}>{isCollapsed ? '↓' : '↑'}</Text>
                 </TouchableOpacity>
 
-                {/* progress bar */}
-                <View style={styles.progressBar}>
-                  <View style={[styles.progressFill, { width: `${progress * 100}%` }]} />
-                </View>
-
-                {/* items */}
                 {!isCollapsed && (
                   <View style={styles.phaseItems}>
-                    {filtered.length === 0 && (
+                    {isEditingPhase ? (
+                      <View style={styles.phaseEditForm}>
+                        <View style={styles.phaseNameRow}>
+                          <Text style={styles.phasePrefix}>Phase {group.phaseNumber} -</Text>
+                          <TextInput
+                            style={[styles.editInput, styles.phaseSuffixInput]}
+                            value={editPhaseSuffix}
+                            onChangeText={setEditPhaseSuffix}
+                            placeholder="phase name"
+                            placeholderTextColor="#555"
+                            autoFocus
+                          />
+                        </View>
+                        <View style={styles.editActions}>
+                          <TouchableOpacity
+                            style={styles.saveButton}
+                            onPress={() => savePhaseEdit(group)}
+                          >
+                            <Text style={styles.saveButtonText}>save</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity onPress={resetPhaseEditor}>
+                            <Text style={styles.cancelText}>cancel</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    ) : (
+                      <View style={styles.phaseActions}>
+                        <TouchableOpacity onPress={() => startPhaseEdit(group)}>
+                          <Text style={styles.actionText}>edit phase</Text>
+                        </TouchableOpacity>
+                      </View>
+                    )}
+
+                    {visibleItems.length === 0 && (
                       <Text style={styles.empty}>no items match this filter</Text>
                     )}
-                    {filtered.map((item) => {
+
+                    {visibleItems.map((item) => {
                       const isExpanded = expandedItem === item.id;
                       const isEditing = editingItem === item.id;
                       const isPickingStatus = statusPickerItem === item.id;
@@ -301,7 +602,6 @@ export default function AdminScreen() {
                       return (
                         <View key={item.id} style={styles.item}>
                           <View style={styles.itemRow}>
-                            {/* status badge -- tap to open picker */}
                             <TouchableOpacity
                               style={[
                                 styles.statusBadge,
@@ -316,7 +616,6 @@ export default function AdminScreen() {
                               </Text>
                             </TouchableOpacity>
 
-                            {/* title -- tap to expand */}
                             <TouchableOpacity
                               style={styles.itemTitleRow}
                               onPress={() => toggleExpand(item.id)}
@@ -333,28 +632,28 @@ export default function AdminScreen() {
                             </TouchableOpacity>
                           </View>
 
-                          {/* status picker */}
                           {isPickingStatus && (
                             <View style={styles.statusPicker}>
-                              {(Object.keys(STATUS_LABELS) as Status[]).map((s) => (
+                              {(Object.keys(STATUS_LABELS) as Status[]).map((status) => (
                                 <TouchableOpacity
-                                  key={s}
+                                  key={status}
                                   style={[
                                     styles.statusPickerOption,
-                                    { backgroundColor: STATUS_BG[s] },
-                                    item.status === s && styles.statusPickerOptionActive,
+                                    { backgroundColor: STATUS_BG[status] },
+                                    item.status === status && styles.statusPickerOptionActive,
                                   ]}
-                                  onPress={() => setStatus(item, s)}
+                                  onPress={() => setStatus(item, status)}
                                 >
-                                  <Text style={[styles.statusText, { color: STATUS_COLORS[s] }]}>
-                                    {STATUS_LABELS[s]}
+                                  <Text
+                                    style={[styles.statusText, { color: STATUS_COLORS[status] }]}
+                                  >
+                                    {STATUS_LABELS[status]}
                                   </Text>
                                 </TouchableOpacity>
                               ))}
                             </View>
                           )}
 
-                          {/* expanded detail */}
                           {isExpanded && (
                             <View style={styles.itemExpanded}>
                               {isEditing ? (
@@ -367,12 +666,13 @@ export default function AdminScreen() {
                                     placeholderTextColor="#555"
                                   />
                                   <TextInput
-                                    style={styles.editInput}
+                                    style={[styles.editInput, styles.descriptionInput]}
                                     value={editDescription}
                                     onChangeText={setEditDescription}
                                     placeholder="description (optional)"
                                     placeholderTextColor="#555"
                                     multiline
+                                    textAlignVertical="top"
                                   />
                                   <View style={styles.editActions}>
                                     <TouchableOpacity
@@ -381,7 +681,7 @@ export default function AdminScreen() {
                                     >
                                       <Text style={styles.saveButtonText}>save</Text>
                                     </TouchableOpacity>
-                                    <TouchableOpacity onPress={() => setEditingItem(null)}>
+                                    <TouchableOpacity onPress={resetItemEditor}>
                                       <Text style={styles.cancelText}>cancel</Text>
                                     </TouchableOpacity>
                                   </View>
@@ -395,7 +695,7 @@ export default function AdminScreen() {
                                     <TouchableOpacity onPress={() => startEdit(item)}>
                                       <Text style={styles.actionText}>edit</Text>
                                     </TouchableOpacity>
-                                    <TouchableOpacity onPress={() => deleteItem(item.id)}>
+                                    <TouchableOpacity onPress={() => confirmDelete(item)}>
                                       <Text style={styles.deleteText}>delete</Text>
                                     </TouchableOpacity>
                                   </View>
@@ -407,8 +707,7 @@ export default function AdminScreen() {
                       );
                     })}
 
-                    {/* add item to this phase */}
-                    {addingToPhase === phase ? (
+                    {addingToPhase === group.phase ? (
                       <View style={styles.addForm}>
                         <TextInput
                           style={styles.editInput}
@@ -419,20 +718,22 @@ export default function AdminScreen() {
                           autoFocus
                         />
                         <TextInput
-                          style={styles.editInput}
+                          style={[styles.editInput, styles.descriptionInput]}
                           value={newDescription}
                           onChangeText={setNewDescription}
                           placeholder="description (optional)"
                           placeholderTextColor="#555"
+                          multiline
+                          textAlignVertical="top"
                         />
                         <View style={styles.editActions}>
                           <TouchableOpacity
                             style={styles.saveButton}
-                            onPress={() => addItem(phase)}
+                            onPress={() => addItem(group.phase)}
                           >
                             <Text style={styles.saveButtonText}>add</Text>
                           </TouchableOpacity>
-                          <TouchableOpacity onPress={() => setAddingToPhase(null)}>
+                          <TouchableOpacity onPress={resetAddForm}>
                             <Text style={styles.cancelText}>cancel</Text>
                           </TouchableOpacity>
                         </View>
@@ -440,7 +741,12 @@ export default function AdminScreen() {
                     ) : (
                       <TouchableOpacity
                         style={styles.addButton}
-                        onPress={() => setAddingToPhase(phase)}
+                        onPress={() => {
+                          resetItemEditor();
+                          setAddingNewPhase(false);
+                          setStatusPickerItem(null);
+                          setAddingToPhase(group.phase);
+                        }}
                       >
                         <Text style={styles.addButtonText}>+ add item</Text>
                       </TouchableOpacity>
@@ -451,36 +757,30 @@ export default function AdminScreen() {
             );
           })}
 
-          {/* new phase */}
           {addingNewPhase ? (
             <View style={styles.newPhaseForm}>
-              <TextInput
-                style={styles.editInput}
-                value={newPhaseName}
-                onChangeText={setNewPhaseName}
-                placeholder="phase name"
-                placeholderTextColor="#555"
-                autoFocus
-              />
+              <View style={styles.phaseNameRow}>
+                <Text style={styles.phasePrefix}>Phase {nextPhaseNumber} -</Text>
+                <TextInput
+                  style={[styles.editInput, styles.phaseSuffixInput]}
+                  value={newPhaseSuffix}
+                  onChangeText={setNewPhaseSuffix}
+                  placeholder="phase name"
+                  placeholderTextColor="#555"
+                  autoFocus
+                />
+              </View>
               <View style={styles.editActions}>
-                <TouchableOpacity
-                  style={styles.saveButton}
-                  onPress={() => {
-                    if (!newPhaseName.trim()) return;
-                    setAddingToPhase(newPhaseName.trim());
-                    setAddingNewPhase(false);
-                    setNewPhaseName('');
-                  }}
-                >
+                <TouchableOpacity style={styles.saveButton} onPress={createNewPhase}>
                   <Text style={styles.saveButtonText}>create phase</Text>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => setAddingNewPhase(false)}>
+                <TouchableOpacity onPress={cancelNewPhase}>
                   <Text style={styles.cancelText}>cancel</Text>
                 </TouchableOpacity>
               </View>
             </View>
           ) : (
-            <TouchableOpacity style={styles.newPhaseButton} onPress={() => setAddingNewPhase(true)}>
+            <TouchableOpacity style={styles.newPhaseButton} onPress={startNewPhase}>
               <Text style={styles.newPhaseButtonText}>+ new phase</Text>
             </TouchableOpacity>
           )}
@@ -569,11 +869,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+    flex: 1,
+    paddingRight: 12,
   },
   phaseTitle: {
     color: '#fff',
     fontSize: 15,
     fontWeight: '700',
+    flexShrink: 1,
   },
   phaseCount: {
     color: '#555',
@@ -583,17 +886,31 @@ const styles = StyleSheet.create({
     color: '#555',
     fontSize: 18,
   },
-  progressBar: {
-    height: 2,
-    backgroundColor: '#2a2a2a',
-  },
-  progressFill: {
-    height: 2,
-    backgroundColor: '#22c55e',
-  },
   phaseItems: {
     padding: 12,
     gap: 6,
+  },
+  phaseActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    paddingBottom: 4,
+  },
+  phaseEditForm: {
+    gap: 8,
+    marginBottom: 4,
+  },
+  phaseNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  phasePrefix: {
+    color: '#888',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  phaseSuffixInput: {
+    flex: 1,
   },
   empty: {
     color: '#444',
@@ -688,6 +1005,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
     borderWidth: 1,
     borderColor: '#333',
+  },
+  descriptionInput: {
+    minHeight: 80,
   },
   editActions: {
     flexDirection: 'row',
