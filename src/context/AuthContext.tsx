@@ -2,11 +2,21 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { AuthChangeEvent, Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 
+type Profile = {
+  id: string;
+  username: string | null;
+  avatar_url: string | null;
+  role: string;
+  created_at: string;
+};
+
 type AuthContextType = {
   user: User | null;
   session: Session | null;
+  profile: Profile | null;
   isLoading: boolean;
   isGuest: boolean;
+  isAdmin: boolean;
   signUp: (email: string, password: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signInWithGitHub: () => Promise<void>;
@@ -28,6 +38,7 @@ export function useAuth() {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isGuest, setIsGuest] = useState<boolean>(() => {
     return sessionStorage.getItem('isGuest') === 'true';
@@ -50,6 +61,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (!user) {
+      setProfile(null);
+      return;
+    }
+
+    const fetchProfile = async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+      if (error) {
+        console.error('Error fetching profile:', error);
+      } else {
+        setProfile(data);
+      }
+    };
+
+    fetchProfile();
+  }, [user]);
 
   async function signUp(email: string, password: string) {
     const { error } = await supabase.auth.signUp({ email, password });
@@ -97,6 +130,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signInWithGoogle,
         signOut,
         continueAsGuest,
+        profile,
+        isAdmin: profile?.role === 'admin',
       }}
     >
       {children}

@@ -13,7 +13,7 @@ function getAvatarColor(seed: string): string {
 }
 
 export function Header() {
-  const { user, isGuest, isLoading, signOut } = useAuth();
+  const { user, isAdmin, isGuest, isLoading, signOut } = useAuth();
   const router = useRouter();
 
   const [guestUsername] = useState(() => {
@@ -54,9 +54,16 @@ export function Header() {
         <Text style={styles.username}>{username}</Text>
       </View>
 
-      <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
-        <Text style={styles.signOutText}>{isGuest ? 'Sign in' : 'Sign out'}</Text>
-      </TouchableOpacity>
+      <View style={styles.right}>
+        {isAdmin && (
+          <TouchableOpacity onPress={() => router.push('/(game)/admin')}>
+            <Text style={styles.adminLink}>admin</Text>
+          </TouchableOpacity>
+        )}
+        <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
+          <Text style={styles.signOutText}>{isGuest ? 'Sign in' : 'Sign out'}</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -103,5 +110,16 @@ const styles = StyleSheet.create({
   signOutText: {
     fontSize: 14,
     color: '#555',
+  },
+  right: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  adminLink: {
+    fontSize: 14,
+    color: '#007bff',
+    fontWeight: '600',
+    marginRight: 12,
   },
 });
