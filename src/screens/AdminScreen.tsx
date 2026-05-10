@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Animated,
   View,
   Text,
   TextInput,
@@ -152,6 +153,38 @@ function getNextPhaseNumber(groups: PhaseGroup[]) {
 function getNextSortOrder(items: RoadmapItem[]) {
   if (items.length === 0) return 0;
   return Math.max(...items.map((item) => item.sort_order)) + 1;
+}
+
+function PhaseSkeleton({ titleWidth }: { titleWidth: number }) {
+  const pulse = useRef(new Animated.Value(0.45)).current;
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, { toValue: 1, duration: 850, useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 0.45, duration: 850, useNativeDriver: true }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [pulse]);
+
+  return (
+    <View style={styles.phaseGroup}>
+      <View style={styles.phaseHeader}>
+        <View style={styles.phaseHeaderTop}>
+          <Animated.View style={[styles.skelTitle, { width: titleWidth, opacity: pulse }]} />
+          <Animated.View style={[styles.skelChevron, { opacity: pulse }]} />
+        </View>
+        <Animated.View style={[styles.skelTrack, { opacity: pulse }]} />
+        <View style={styles.phaseStats}>
+          <Animated.View style={[styles.skelChip, { opacity: pulse }]} />
+          <Animated.View style={[styles.skelChip, { width: 64, opacity: pulse }]} />
+          <Animated.View style={[styles.skelChip, { width: 52, opacity: pulse }]} />
+        </View>
+      </View>
+    </View>
+  );
 }
 
 export default function AdminScreen() {
@@ -643,7 +676,11 @@ export default function AdminScreen() {
       </View>
 
       {isLoading ? (
-        <Text style={styles.loading}>Loading...</Text>
+        <View style={styles.skeletonList}>
+          <PhaseSkeleton titleWidth={180} />
+          <PhaseSkeleton titleWidth={140} />
+          <PhaseSkeleton titleWidth={210} />
+        </View>
       ) : (
         <ScrollView style={styles.list} contentContainerStyle={styles.listContent}>
           {filteredGroups.map((group) => {
@@ -1111,6 +1148,32 @@ const styles = StyleSheet.create({
     color: '#555',
     textAlign: 'center',
     marginTop: 40,
+  },
+  skeletonList: {
+    paddingHorizontal: 20,
+    gap: 12,
+  },
+  skelTitle: {
+    height: 14,
+    borderRadius: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  skelChevron: {
+    width: 18,
+    height: 18,
+    borderRadius: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+  },
+  skelTrack: {
+    height: 4,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+  },
+  skelChip: {
+    height: 10,
+    width: 78,
+    borderRadius: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
   },
   list: {
     flex: 1,
