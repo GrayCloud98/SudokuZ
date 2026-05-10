@@ -47,10 +47,17 @@ const STATUS_COLORS: Record<Status, string> = {
 };
 
 const STATUS_BG: Record<Status, string> = {
-  todo: '#1f1f1f',
-  in_progress: '#451a03',
-  done: '#052e16',
-  parked: '#2e1065',
+  todo: 'rgba(136, 136, 136, 0.10)',
+  in_progress: 'rgba(245, 158, 11, 0.10)',
+  done: 'rgba(34, 197, 94, 0.10)',
+  parked: 'rgba(167, 139, 250, 0.10)',
+};
+
+const STATUS_BORDER: Record<Status, string> = {
+  todo: 'rgba(136, 136, 136, 0.22)',
+  in_progress: 'rgba(245, 158, 11, 0.28)',
+  done: 'rgba(34, 197, 94, 0.28)',
+  parked: 'rgba(167, 139, 250, 0.28)',
 };
 
 const STATUS_LABELS: Record<Status, string> = {
@@ -668,15 +675,32 @@ export default function AdminScreen() {
                       const isPickingStatus = statusPickerItem === item.id;
 
                       return (
-                        <View key={item.id} style={styles.item}>
+                        <View
+                          key={item.id}
+                          style={[
+                            styles.item,
+                            { borderLeftColor: STATUS_COLORS[item.status] },
+                            isExpanded && styles.itemExpandedCard,
+                          ]}
+                        >
                           <View style={styles.itemRow}>
                             <TouchableOpacity
                               style={[
                                 styles.statusBadge,
-                                { backgroundColor: STATUS_BG[item.status] },
+                                {
+                                  backgroundColor: STATUS_BG[item.status],
+                                  borderColor: STATUS_BORDER[item.status],
+                                },
                               ]}
                               onPress={() => setStatusPickerItem(isPickingStatus ? null : item.id)}
+                              activeOpacity={0.7}
                             >
+                              <View
+                                style={[
+                                  styles.statusBadgeDot,
+                                  { backgroundColor: STATUS_COLORS[item.status] },
+                                ]}
+                              />
                               <Text
                                 style={[styles.statusText, { color: STATUS_COLORS[item.status] }]}
                               >
@@ -687,6 +711,7 @@ export default function AdminScreen() {
                             <TouchableOpacity
                               style={styles.itemTitleRow}
                               onPress={() => toggleExpand(item.id)}
+                              activeOpacity={0.7}
                             >
                               <Text
                                 style={[
@@ -707,11 +732,21 @@ export default function AdminScreen() {
                                   key={status}
                                   style={[
                                     styles.statusPickerOption,
-                                    { backgroundColor: STATUS_BG[status] },
+                                    {
+                                      backgroundColor: STATUS_BG[status],
+                                      borderColor: STATUS_BORDER[status],
+                                    },
                                     item.status === status && styles.statusPickerOptionActive,
                                   ]}
                                   onPress={() => setStatus(item, status)}
+                                  activeOpacity={0.7}
                                 >
+                                  <View
+                                    style={[
+                                      styles.statusBadgeDot,
+                                      { backgroundColor: STATUS_COLORS[status] },
+                                    ]}
+                                  />
                                   <Text
                                     style={[styles.statusText, { color: STATUS_COLORS[status] }]}
                                   >
@@ -1044,63 +1079,93 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   item: {
-    backgroundColor: '#222',
+    backgroundColor: '#161618',
     borderRadius: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: 'transparent',
+    borderTopWidth: 1,
+    borderRightWidth: 1,
+    borderBottomWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.04)',
+    borderRightColor: 'rgba(255, 255, 255, 0.04)',
+    borderBottomColor: 'rgba(255, 255, 255, 0.04)',
     overflow: 'hidden',
-    marginBottom: 4,
+    marginBottom: 6,
+  },
+  itemExpandedCard: {
+    backgroundColor: '#1c1c1f',
+    borderTopColor: 'rgba(255, 255, 255, 0.08)',
+    borderRightColor: 'rgba(255, 255, 255, 0.08)',
+    borderBottomColor: 'rgba(255, 255, 255, 0.08)',
   },
   itemRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 10,
+    paddingVertical: 11,
+    paddingHorizontal: 12,
     gap: 10,
   },
   statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
     paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
+    paddingVertical: 3,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  statusBadgeDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 999,
   },
   statusText: {
-    fontSize: 11,
+    fontSize: 10.5,
     fontWeight: '600',
+    letterSpacing: 0.4,
     textTransform: 'uppercase',
   },
   statusPicker: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 6,
-    paddingHorizontal: 10,
-    paddingBottom: 10,
+    paddingHorizontal: 12,
+    paddingBottom: 12,
   },
   statusPickerOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
     paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 4,
+    paddingVertical: 4,
+    borderRadius: 999,
+    borderWidth: 1,
   },
   statusPickerOptionActive: {
-    borderWidth: 1,
-    borderColor: '#ffffff33',
+    borderColor: 'rgba(255, 255, 255, 0.32)',
   },
   itemTitleRow: {
     flex: 1,
   },
   itemTitle: {
-    color: '#ccc',
+    color: '#e4e4e7',
     fontSize: 14,
+    letterSpacing: -0.1,
   },
   itemTitleDone: {
     textDecorationLine: 'line-through',
-    color: '#444',
+    color: '#52525b',
   },
   itemExpanded: {
-    paddingHorizontal: 12,
-    paddingBottom: 12,
+    paddingHorizontal: 14,
+    paddingBottom: 14,
+    paddingTop: 2,
   },
   itemDescription: {
-    color: '#555',
+    color: '#a1a1aa',
     fontSize: 13,
-    marginBottom: 10,
-    lineHeight: 18,
+    marginBottom: 12,
+    lineHeight: 19,
   },
   itemActions: {
     flexDirection: 'row',
