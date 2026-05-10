@@ -206,13 +206,25 @@ export default function AdminScreen() {
     const phaseGroups =
       phaseFilter === 'all' ? groups : groups.filter((g) => g.phase === phaseFilter);
 
-    return phaseGroups.map((group) => ({
-      ...group,
-      items:
-        statusFilter === 'all'
-          ? group.items
-          : group.items.filter((item) => item.status === statusFilter),
-    }));
+    return phaseGroups.map((group) => {
+      const counts: Record<Status, number> = {
+        todo: 0,
+        in_progress: 0,
+        done: 0,
+        parked: 0,
+      };
+      for (const item of group.items) counts[item.status]++;
+
+      return {
+        ...group,
+        counts,
+        totalCount: group.items.length,
+        items:
+          statusFilter === 'all'
+            ? group.items
+            : group.items.filter((item) => item.status === statusFilter),
+      };
+    });
   }, [groups, phaseFilter, statusFilter]);
 
   const nextPhaseNumber = useMemo(() => getNextPhaseNumber(groups), [groups]);
@@ -537,28 +549,72 @@ export default function AdminScreen() {
         <ScrollView style={styles.list} contentContainerStyle={styles.listContent}>
           {filteredGroups.map((group) => {
             const isCollapsed = collapsedPhases[group.phase] ?? true;
-            const doneCount = group.items.filter((item) => item.status === 'done').length;
-            const totalCount = group.items.length;
             const visibleItems = group.items;
             const isEditingPhase = editingPhase === group.phase;
+            const progressStatuses: Status[] = ['done', 'in_progress', 'parked'];
+            const breakdownOrder: Status[] = ['done', 'in_progress', 'todo', 'parked'];
 
             return (
               <View key={group.phase} style={styles.phaseGroup}>
                 <TouchableOpacity
                   style={styles.phaseHeader}
                   onPress={() => togglePhase(group.phase)}
+                  activeOpacity={0.7}
                 >
-                  <View style={styles.phaseHeaderLeft}>
-                    <Text style={styles.phaseTitle}>{group.phase}</Text>
-                    <Text style={styles.phaseCount}>
-                      {doneCount}/{totalCount}
-                    </Text>
+                  <View style={styles.phaseHeaderTop}>
+                    <View style={styles.phaseHeaderLeft}>
+                      <Text style={styles.phaseTitle}>{group.phase}</Text>
+                      <Text style={styles.phaseCount}>
+                        {group.counts.done}/{group.totalCount}
+                      </Text>
+                    </View>
+                    <Feather
+                      name={isCollapsed ? 'chevron-down' : 'chevron-up'}
+                      size={18}
+                      color="#71717a"
+                    />
                   </View>
-                  <Feather
-                    name={isCollapsed ? 'chevron-down' : 'chevron-up'}
-                    size={18}
-                    color="#71717a"
-                  />
+
+                  {group.totalCount > 0 && (
+                    <View style={styles.progressTrack}>
+                      {progressStatuses.map((status) => {
+                        const count = group.counts[status];
+                        if (count === 0) return null;
+                        const pct = (count / group.totalCount) * 100;
+                        return (
+                          <View
+                            key={status}
+                            style={[
+                              styles.progressSegment,
+                              {
+                                flexBasis: `${pct}%`,
+                                backgroundColor: STATUS_COLORS[status],
+                              },
+                            ]}
+                          />
+                        );
+                      })}
+                    </View>
+                  )}
+
+                  {group.totalCount > 0 && (
+                    <View style={styles.phaseStats}>
+                      {breakdownOrder.map((status) => {
+                        const count = group.counts[status];
+                        if (count === 0) return null;
+                        return (
+                          <View key={status} style={styles.phaseStat}>
+                            <View
+                              style={[styles.statDot, { backgroundColor: STATUS_COLORS[status] }]}
+                            />
+                            <Text style={styles.phaseStatText}>
+                              {count} {STATUS_LABELS[status]}
+                            </Text>
+                          </View>
+                        );
+                      })}
+                    </View>
+                  )}
                 </TouchableOpacity>
 
                 {!isCollapsed && (
@@ -895,11 +951,14 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   phaseHeader: {
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    gap: 10,
+  },
+  phaseHeaderTop: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
   },
   phaseHeaderLeft: {
     flexDirection: 'row',
@@ -909,14 +968,48 @@ const styles = StyleSheet.create({
     paddingRight: 12,
   },
   phaseTitle: {
-    color: '#fff',
+    color: '#fafafa',
     fontSize: 15,
-    fontWeight: '700',
+    fontWeight: '600',
+    letterSpacing: -0.2,
     flexShrink: 1,
   },
   phaseCount: {
-    color: '#555',
-    fontSize: 13,
+    color: '#71717a',
+    fontSize: 12,
+    fontVariant: ['tabular-nums'],
+  },
+  progressTrack: {
+    height: 4,
+    flexDirection: 'row',
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderRadius: 999,
+    overflow: 'hidden',
+  },
+  progressSegment: {
+    height: '100%',
+  },
+  phaseStats: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    rowGap: 4,
+  },
+  phaseStat: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  statDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 999,
+  },
+  phaseStatText: {
+    color: '#a1a1aa',
+    fontSize: 11,
+    fontVariant: ['tabular-nums'],
+    letterSpacing: 0.2,
   },
   phaseItems: {
     padding: 12,
