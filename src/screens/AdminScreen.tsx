@@ -11,6 +11,7 @@ import {
   UIManager,
   Alert,
 } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
@@ -60,7 +61,7 @@ const STATUS_LABELS: Record<Status, string> = {
 };
 
 const STATUS_FILTERS: { label: string; value: Status | 'all' }[] = [
-  { label: 'all', value: 'all' },
+  { label: 'All', value: 'all' },
   { label: 'todo', value: 'todo' },
   { label: 'in progress', value: 'in_progress' },
   { label: 'done', value: 'done' },
@@ -472,10 +473,11 @@ export default function AdminScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.back}>back</Text>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <Feather name="chevron-left" size={18} color="#4a9eff" />
+          <Text style={styles.back}>Back</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>admin</Text>
+        <Text style={styles.title}>Admin</Text>
       </View>
 
       <View style={styles.filters}>
@@ -506,7 +508,7 @@ export default function AdminScreen() {
             <Text
               style={[styles.filterChipText, phaseFilter === 'all' && styles.filterChipTextActive]}
             >
-              all phases
+              All phases
             </Text>
           </TouchableOpacity>
 
@@ -530,7 +532,7 @@ export default function AdminScreen() {
       </View>
 
       {isLoading ? (
-        <Text style={styles.loading}>loading...</Text>
+        <Text style={styles.loading}>Loading...</Text>
       ) : (
         <ScrollView style={styles.list} contentContainerStyle={styles.listContent}>
           {filteredGroups.map((group) => {
@@ -552,7 +554,11 @@ export default function AdminScreen() {
                       {doneCount}/{totalCount}
                     </Text>
                   </View>
-                  <Text style={styles.chevron}>{isCollapsed ? '↓' : '↑'}</Text>
+                  <Feather
+                    name={isCollapsed ? 'chevron-down' : 'chevron-up'}
+                    size={18}
+                    color="#71717a"
+                  />
                 </TouchableOpacity>
 
                 {!isCollapsed && (
@@ -575,23 +581,29 @@ export default function AdminScreen() {
                             style={styles.saveButton}
                             onPress={() => savePhaseEdit(group)}
                           >
-                            <Text style={styles.saveButtonText}>save</Text>
+                            <Feather name="check" size={13} color="#fff" />
+                            <Text style={styles.saveButtonText}>Save</Text>
                           </TouchableOpacity>
-                          <TouchableOpacity onPress={resetPhaseEditor}>
-                            <Text style={styles.cancelText}>cancel</Text>
+                          <TouchableOpacity onPress={resetPhaseEditor} style={styles.cancelButton}>
+                            <Feather name="x" size={13} color="#71717a" />
+                            <Text style={styles.cancelText}>Cancel</Text>
                           </TouchableOpacity>
                         </View>
                       </View>
                     ) : (
                       <View style={styles.phaseActions}>
-                        <TouchableOpacity onPress={() => startPhaseEdit(group)}>
-                          <Text style={styles.actionText}>edit phase</Text>
+                        <TouchableOpacity
+                          onPress={() => startPhaseEdit(group)}
+                          style={styles.iconAction}
+                        >
+                          <Feather name="edit-2" size={12} color="#4a9eff" />
+                          <Text style={styles.actionText}>Edit phase</Text>
                         </TouchableOpacity>
                       </View>
                     )}
 
                     {visibleItems.length === 0 && (
-                      <Text style={styles.empty}>no items match this filter</Text>
+                      <Text style={styles.empty}>No items match this filter</Text>
                     )}
 
                     {visibleItems.map((item) => {
@@ -679,10 +691,15 @@ export default function AdminScreen() {
                                       style={styles.saveButton}
                                       onPress={() => saveEdit(item)}
                                     >
-                                      <Text style={styles.saveButtonText}>save</Text>
+                                      <Feather name="check" size={13} color="#fff" />
+                                      <Text style={styles.saveButtonText}>Save</Text>
                                     </TouchableOpacity>
-                                    <TouchableOpacity onPress={resetItemEditor}>
-                                      <Text style={styles.cancelText}>cancel</Text>
+                                    <TouchableOpacity
+                                      onPress={resetItemEditor}
+                                      style={styles.cancelButton}
+                                    >
+                                      <Feather name="x" size={13} color="#71717a" />
+                                      <Text style={styles.cancelText}>Cancel</Text>
                                     </TouchableOpacity>
                                   </View>
                                 </View>
@@ -692,11 +709,19 @@ export default function AdminScreen() {
                                     <Text style={styles.itemDescription}>{item.description}</Text>
                                   )}
                                   <View style={styles.itemActions}>
-                                    <TouchableOpacity onPress={() => startEdit(item)}>
-                                      <Text style={styles.actionText}>edit</Text>
+                                    <TouchableOpacity
+                                      onPress={() => startEdit(item)}
+                                      style={styles.iconAction}
+                                    >
+                                      <Feather name="edit-2" size={12} color="#4a9eff" />
+                                      <Text style={styles.actionText}>Edit</Text>
                                     </TouchableOpacity>
-                                    <TouchableOpacity onPress={() => confirmDelete(item)}>
-                                      <Text style={styles.deleteText}>delete</Text>
+                                    <TouchableOpacity
+                                      onPress={() => confirmDelete(item)}
+                                      style={styles.iconAction}
+                                    >
+                                      <Feather name="trash-2" size={12} color="#ef4444" />
+                                      <Text style={styles.deleteText}>Delete</Text>
                                     </TouchableOpacity>
                                   </View>
                                 </View>
@@ -731,10 +756,12 @@ export default function AdminScreen() {
                             style={styles.saveButton}
                             onPress={() => addItem(group.phase)}
                           >
-                            <Text style={styles.saveButtonText}>add</Text>
+                            <Feather name="check" size={13} color="#fff" />
+                            <Text style={styles.saveButtonText}>Add</Text>
                           </TouchableOpacity>
-                          <TouchableOpacity onPress={resetAddForm}>
-                            <Text style={styles.cancelText}>cancel</Text>
+                          <TouchableOpacity onPress={resetAddForm} style={styles.cancelButton}>
+                            <Feather name="x" size={13} color="#71717a" />
+                            <Text style={styles.cancelText}>Cancel</Text>
                           </TouchableOpacity>
                         </View>
                       </View>
@@ -748,7 +775,8 @@ export default function AdminScreen() {
                           setAddingToPhase(group.phase);
                         }}
                       >
-                        <Text style={styles.addButtonText}>+ add item</Text>
+                        <Feather name="plus" size={13} color="#52525b" />
+                        <Text style={styles.addButtonText}>Add item</Text>
                       </TouchableOpacity>
                     )}
                   </View>
@@ -772,16 +800,19 @@ export default function AdminScreen() {
               </View>
               <View style={styles.editActions}>
                 <TouchableOpacity style={styles.saveButton} onPress={createNewPhase}>
-                  <Text style={styles.saveButtonText}>create phase</Text>
+                  <Feather name="check" size={13} color="#fff" />
+                  <Text style={styles.saveButtonText}>Create phase</Text>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={cancelNewPhase}>
-                  <Text style={styles.cancelText}>cancel</Text>
+                <TouchableOpacity onPress={cancelNewPhase} style={styles.cancelButton}>
+                  <Feather name="x" size={13} color="#71717a" />
+                  <Text style={styles.cancelText}>Cancel</Text>
                 </TouchableOpacity>
               </View>
             </View>
           ) : (
             <TouchableOpacity style={styles.newPhaseButton} onPress={startNewPhase}>
-              <Text style={styles.newPhaseButtonText}>+ new phase</Text>
+              <Feather name="plus" size={14} color="#52525b" />
+              <Text style={styles.newPhaseButtonText}>New phase</Text>
             </TouchableOpacity>
           )}
         </ScrollView>
@@ -802,6 +833,11 @@ const styles = StyleSheet.create({
     gap: 16,
     paddingHorizontal: 20,
     marginBottom: 16,
+  },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
   },
   back: {
     fontSize: 14,
@@ -881,10 +917,6 @@ const styles = StyleSheet.create({
   phaseCount: {
     color: '#555',
     fontSize: 13,
-  },
-  chevron: {
-    color: '#555',
-    fontSize: 18,
   },
   phaseItems: {
     padding: 12,
@@ -981,6 +1013,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 16,
   },
+  iconAction: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
   actionText: {
     color: '#4a9eff',
     fontSize: 13,
@@ -1015,8 +1052,11 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   saveButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     backgroundColor: '#4a9eff',
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
     paddingVertical: 7,
     borderRadius: 6,
   },
@@ -1025,16 +1065,25 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 13,
   },
+  cancelButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 7,
+  },
   cancelText: {
-    color: '#555',
+    color: '#71717a',
     fontSize: 13,
   },
   addButton: {
-    paddingVertical: 10,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 10,
   },
   addButtonText: {
-    color: '#444',
+    color: '#52525b',
     fontSize: 13,
   },
   newPhaseForm: {
@@ -1045,15 +1094,18 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   newPhaseButton: {
-    paddingVertical: 16,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 16,
     borderRadius: 10,
     borderWidth: 1,
     borderColor: '#222',
     marginBottom: 16,
   },
   newPhaseButtonText: {
-    color: '#333',
+    color: '#52525b',
     fontSize: 14,
   },
 });
