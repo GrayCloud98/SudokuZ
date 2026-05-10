@@ -565,7 +565,7 @@ export default function AdminScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <View style={styles.hero}>
         <Pressable
           onPress={() => router.back()}
           style={({ hovered }: PressState) => [
@@ -576,7 +576,78 @@ export default function AdminScreen() {
           <Feather name="chevron-left" size={18} color="#6366f1" />
           <Text style={styles.back}>Back</Text>
         </Pressable>
-        <Text style={styles.title}>Admin</Text>
+
+        <View style={styles.heroHeading}>
+          <View style={styles.heroEyebrow}>
+            <Feather name="settings" size={11} color="#828599" />
+            <Text style={styles.heroEyebrowText}>Admin</Text>
+          </View>
+          <Text style={styles.heroTitle}>Roadmap</Text>
+          <Text style={styles.heroSubtitle}>
+            {items.length} {items.length === 1 ? 'item' : 'items'} across {groups.length}{' '}
+            {groups.length === 1 ? 'phase' : 'phases'}
+          </Text>
+        </View>
+
+        <View style={styles.heroStats}>
+          {(
+            [
+              {
+                key: 'all',
+                label: 'Total',
+                value: items.length,
+                color: '#6366f1',
+              },
+              {
+                key: 'done',
+                label: 'Done',
+                value: statusTotalCounts.done,
+                color: '#34d399',
+              },
+              {
+                key: 'in_progress',
+                label: 'In progress',
+                value: statusTotalCounts.in_progress,
+                color: '#fbbf24',
+              },
+              {
+                key: 'todo',
+                label: 'Todo',
+                value: statusTotalCounts.todo,
+                color: '#94a3b8',
+              },
+            ] as const
+          ).map((stat) => (
+            <View key={stat.key} style={styles.heroStatCard}>
+              <View
+                style={[
+                  styles.heroStatDot,
+                  { backgroundColor: stat.color, shadowColor: stat.color },
+                ]}
+              />
+              <Text style={styles.heroStatValue}>{stat.value}</Text>
+              <Text style={styles.heroStatLabel}>{stat.label}</Text>
+            </View>
+          ))}
+        </View>
+
+        {items.length > 0 && (
+          <View style={styles.heroProgress}>
+            <View style={styles.heroProgressBarTrack}>
+              <View
+                style={[
+                  styles.heroProgressBarFill,
+                  {
+                    width: `${(statusTotalCounts.done / items.length) * 100}%`,
+                  },
+                ]}
+              />
+            </View>
+            <Text style={styles.heroProgressLabel}>
+              {Math.round((statusTotalCounts.done / items.length) * 100)}% complete
+            </Text>
+          </View>
+        )}
       </View>
 
       <View style={styles.toolbar}>
@@ -1162,12 +1233,114 @@ const styles = StyleSheet.create({
     backgroundColor: '#0b0d1f',
     paddingTop: 60,
   },
-  header: {
+  hero: {
+    paddingHorizontal: 20,
+    paddingTop: 4,
+    paddingBottom: 22,
+    gap: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(99, 102, 241, 0.10)',
+    marginBottom: 20,
+  },
+  heroHeading: {
+    gap: 4,
+  },
+  heroEyebrow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
-    paddingHorizontal: 20,
-    marginBottom: 16,
+    gap: 6,
+    marginBottom: 4,
+  },
+  heroEyebrowText: {
+    color: '#828599',
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+  },
+  heroTitle: {
+    color: '#f5f5fa',
+    fontSize: 30,
+    fontWeight: '700',
+    letterSpacing: -0.8,
+  },
+  heroSubtitle: {
+    color: '#a8aac1',
+    fontSize: 13,
+    fontVariant: ['tabular-nums'],
+  },
+  heroStats: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 4,
+  },
+  heroStatCard: {
+    flex: 1,
+    backgroundColor: '#14172e',
+    borderWidth: 1,
+    borderColor: 'rgba(99, 102, 241, 0.14)',
+    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    gap: 4,
+  },
+  heroStatDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 999,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.7,
+    shadowRadius: 8,
+    elevation: 4,
+    marginBottom: 2,
+  },
+  heroStatValue: {
+    color: '#f5f5fa',
+    fontSize: 22,
+    fontWeight: '600',
+    letterSpacing: -0.5,
+    fontVariant: ['tabular-nums'],
+    lineHeight: 26,
+  },
+  heroStatLabel: {
+    color: '#828599',
+    fontSize: 10.5,
+    fontWeight: '600',
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+  },
+  heroProgress: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginTop: 4,
+  },
+  heroProgressBarTrack: {
+    flex: 1,
+    height: 8,
+    backgroundColor: 'rgba(99, 102, 241, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(99, 102, 241, 0.18)',
+    borderRadius: 999,
+    overflow: 'hidden',
+  },
+  heroProgressBarFill: {
+    height: '100%',
+    backgroundColor: '#6366f1',
+    shadowColor: '#6366f1',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  heroProgressLabel: {
+    color: '#a8aac1',
+    fontSize: 12,
+    fontWeight: '600',
+    fontVariant: ['tabular-nums'],
+    letterSpacing: 0.3,
+    minWidth: 88,
+    textAlign: 'right',
   },
   backButton: {
     flexDirection: 'row',
