@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
+  Modal,
+  Pressable,
   View,
   Text,
   TextInput,
@@ -10,7 +12,6 @@ import {
   LayoutAnimation,
   Platform,
   UIManager,
-  Alert,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -210,6 +211,7 @@ export default function AdminScreen() {
   const [editPhaseSuffix, setEditPhaseSuffix] = useState('');
   const [pendingPhase, setPendingPhase] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [itemPendingDelete, setItemPendingDelete] = useState<RoadmapItem | null>(null);
 
   useEffect(() => {
     if (!isAdmin) {
@@ -467,14 +469,14 @@ export default function AdminScreen() {
   }
 
   function confirmDelete(item: RoadmapItem) {
-    Alert.alert('Delete item', `Delete "${item.title}"?`, [
-      { text: 'cancel', style: 'cancel' },
-      {
-        text: 'delete',
-        style: 'destructive',
-        onPress: () => deleteItem(item.id),
-      },
-    ]);
+    setItemPendingDelete(item);
+  }
+
+  async function handleConfirmDelete() {
+    if (!itemPendingDelete) return;
+    const id = itemPendingDelete.id;
+    setItemPendingDelete(null);
+    await deleteItem(id);
   }
 
   async function deleteItem(id: string) {
@@ -1084,6 +1086,46 @@ export default function AdminScreen() {
           ) : null}
         </ScrollView>
       )}
+
+      <Modal
+        visible={itemPendingDelete !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setItemPendingDelete(null)}
+      >
+        <Pressable style={styles.modalBackdrop} onPress={() => setItemPendingDelete(null)}>
+          <Pressable style={styles.modalCard} onPress={() => {}}>
+            <View style={styles.modalIcon}>
+              <Feather name="alert-triangle" size={18} color="#ef4444" />
+            </View>
+            <Text style={styles.modalTitle}>Delete item</Text>
+            <Text style={styles.modalBody}>
+              Permanently delete{' '}
+              <Text style={styles.modalEmphasis}>
+                &ldquo;{itemPendingDelete?.title ?? ''}&rdquo;
+              </Text>
+              ? This cannot be undone.
+            </Text>
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={styles.modalCancelButton}
+                onPress={() => setItemPendingDelete(null)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.modalCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.modalDeleteButton}
+                onPress={handleConfirmDelete}
+                activeOpacity={0.85}
+              >
+                <Feather name="trash-2" size={13} color="#fff" />
+                <Text style={styles.modalDeleteText}>Delete</Text>
+              </TouchableOpacity>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -1575,5 +1617,79 @@ const styles = StyleSheet.create({
   newPhaseButtonText: {
     color: '#52525b',
     fontSize: 14,
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  modalCard: {
+    width: '100%',
+    maxWidth: 400,
+    backgroundColor: '#161618',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    padding: 22,
+    gap: 10,
+  },
+  modalIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 999,
+    backgroundColor: 'rgba(239, 68, 68, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.32)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  modalTitle: {
+    color: '#fafafa',
+    fontSize: 16,
+    fontWeight: '600',
+    letterSpacing: -0.2,
+  },
+  modalBody: {
+    color: '#a1a1aa',
+    fontSize: 13,
+    lineHeight: 20,
+  },
+  modalEmphasis: {
+    color: '#fafafa',
+    fontWeight: '500',
+  },
+  modalActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 12,
+  },
+  modalCancelButton: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 7,
+  },
+  modalCancelText: {
+    color: '#a1a1aa',
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  modalDeleteButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#ef4444',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 7,
+  },
+  modalDeleteText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '600',
   },
 });
