@@ -22,6 +22,11 @@ if (Platform.OS === 'android') {
   UIManager.setLayoutAnimationEnabledExperimental?.(true);
 }
 
+// `hovered` and `focused` are exposed by react-native-web's Pressable but
+// are not in the upstream React Native types yet. This local shim re-adds
+// them so we can drive web-only hover styles without `any` casts.
+type PressState = { hovered?: boolean; focused?: boolean; pressed: boolean };
+
 type Status = 'todo' | 'in_progress' | 'done' | 'parked';
 
 type RoadmapItem = {
@@ -561,10 +566,16 @@ export default function AdminScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <Pressable
+          onPress={() => router.back()}
+          style={({ hovered }: PressState) => [
+            styles.backButton,
+            hovered && styles.backButtonHover,
+          ]}
+        >
           <Feather name="chevron-left" size={18} color="#4a9eff" />
           <Text style={styles.back}>Back</Text>
-        </TouchableOpacity>
+        </Pressable>
         <Text style={styles.title}>Admin</Text>
       </View>
 
@@ -597,11 +608,15 @@ export default function AdminScreen() {
             const isActive = statusFilter === filter.value;
             const count = statusTotalCounts[filter.value];
             return (
-              <TouchableOpacity
+              <Pressable
                 key={filter.value}
-                style={[styles.filterChip, isActive && styles.filterChipActive]}
+                style={({ hovered, pressed }: PressState) => [
+                  styles.filterChip,
+                  isActive && styles.filterChipActive,
+                  hovered && !isActive && styles.filterChipHover,
+                  pressed && { opacity: 0.85 },
+                ]}
                 onPress={() => setStatusFilter(filter.value)}
-                activeOpacity={0.7}
               >
                 <Text style={[styles.filterChipText, isActive && styles.filterChipTextActive]}>
                   {filter.label}
@@ -616,16 +631,20 @@ export default function AdminScreen() {
                     {count}
                   </Text>
                 </View>
-              </TouchableOpacity>
+              </Pressable>
             );
           })}
         </ScrollView>
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterRow}>
-          <TouchableOpacity
-            style={[styles.filterChip, phaseFilter === 'all' && styles.filterChipActive]}
+          <Pressable
+            style={({ hovered, pressed }: PressState) => [
+              styles.filterChip,
+              phaseFilter === 'all' && styles.filterChipActive,
+              hovered && phaseFilter !== 'all' && styles.filterChipHover,
+              pressed && { opacity: 0.85 },
+            ]}
             onPress={() => setPhaseFilter('all')}
-            activeOpacity={0.7}
           >
             <Text
               style={[styles.filterChipText, phaseFilter === 'all' && styles.filterChipTextActive]}
@@ -647,16 +666,20 @@ export default function AdminScreen() {
                 {items.length}
               </Text>
             </View>
-          </TouchableOpacity>
+          </Pressable>
 
           {groups.map((group) => {
             const isActive = phaseFilter === group.phase;
             return (
-              <TouchableOpacity
+              <Pressable
                 key={group.phase}
-                style={[styles.filterChip, isActive && styles.filterChipActive]}
+                style={({ hovered, pressed }: PressState) => [
+                  styles.filterChip,
+                  isActive && styles.filterChipActive,
+                  hovered && !isActive && styles.filterChipHover,
+                  pressed && { opacity: 0.85 },
+                ]}
                 onPress={() => setPhaseFilter(group.phase)}
-                activeOpacity={0.7}
               >
                 <Text style={[styles.filterChipText, isActive && styles.filterChipTextActive]}>
                   {group.phase}
@@ -671,7 +694,7 @@ export default function AdminScreen() {
                     {phaseTotalCounts[group.phase] ?? 0}
                   </Text>
                 </View>
-              </TouchableOpacity>
+              </Pressable>
             );
           })}
         </ScrollView>
@@ -842,10 +865,13 @@ export default function AdminScreen() {
                               </Text>
                             </TouchableOpacity>
 
-                            <TouchableOpacity
-                              style={styles.itemTitleRow}
+                            <Pressable
+                              style={({ hovered, pressed }: PressState) => [
+                                styles.itemTitleRow,
+                                hovered && styles.itemTitleRowHover,
+                                pressed && { opacity: 0.8 },
+                              ]}
                               onPress={() => toggleExpand(item.id)}
-                              activeOpacity={0.7}
                             >
                               <Text
                                 style={[
@@ -856,7 +882,7 @@ export default function AdminScreen() {
                               >
                                 {item.title}
                               </Text>
-                            </TouchableOpacity>
+                            </Pressable>
                           </View>
 
                           {isPickingStatus && (
@@ -1147,15 +1173,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 2,
+    paddingVertical: 4,
+    paddingRight: 6,
+    borderRadius: 6,
+  },
+  backButtonHover: {
+    backgroundColor: 'rgba(74, 158, 255, 0.08)',
   },
   back: {
     fontSize: 14,
     color: '#4a9eff',
+    fontWeight: '500',
   },
   title: {
     fontSize: 22,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontWeight: '600',
+    color: '#fafafa',
+    letterSpacing: -0.4,
   },
   toolbar: {
     paddingHorizontal: 20,
@@ -1202,6 +1236,10 @@ const styles = StyleSheet.create({
   filterChipActive: {
     backgroundColor: '#4a9eff',
     borderColor: '#4a9eff',
+  },
+  filterChipHover: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderColor: 'rgba(255, 255, 255, 0.14)',
   },
   filterChipText: {
     color: '#a1a1aa',
@@ -1274,7 +1312,9 @@ const styles = StyleSheet.create({
   phaseGroup: {
     marginBottom: 12,
     borderRadius: 10,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#111113',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.06)',
     overflow: 'hidden',
   },
   phaseHeader: {
@@ -1498,6 +1538,11 @@ const styles = StyleSheet.create({
   },
   itemTitleRow: {
     flex: 1,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  itemTitleRowHover: {
+    opacity: 0.85,
   },
   itemTitle: {
     color: '#e4e4e7',
