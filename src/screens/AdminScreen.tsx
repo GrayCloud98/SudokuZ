@@ -176,6 +176,7 @@ export default function AdminScreen() {
   const [editingPhase, setEditingPhase] = useState<string | null>(null);
   const [editPhaseSuffix, setEditPhaseSuffix] = useState('');
   const [pendingPhase, setPendingPhase] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     if (!isAdmin) {
@@ -209,30 +210,63 @@ export default function AdminScreen() {
     });
   }, [items, pendingPhase]);
 
+  const trimmedSearch = searchQuery.trim().toLowerCase();
+
   const filteredGroups = useMemo(() => {
     const phaseGroups =
       phaseFilter === 'all' ? groups : groups.filter((g) => g.phase === phaseFilter);
 
-    return phaseGroups.map((group) => {
-      const counts: Record<Status, number> = {
-        todo: 0,
-        in_progress: 0,
-        done: 0,
-        parked: 0,
-      };
-      for (const item of group.items) counts[item.status]++;
+    return phaseGroups
+      .map((group) => {
+        const counts: Record<Status, number> = {
+          todo: 0,
+          in_progress: 0,
+          done: 0,
+          parked: 0,
+        };
+        for (const item of group.items) counts[item.status]++;
 
-      return {
-        ...group,
-        counts,
-        totalCount: group.items.length,
-        items:
-          statusFilter === 'all'
-            ? group.items
-            : group.items.filter((item) => item.status === statusFilter),
-      };
-    });
-  }, [groups, phaseFilter, statusFilter]);
+        let visibleItems = group.items;
+        if (statusFilter !== 'all') {
+          visibleItems = visibleItems.filter((item) => item.status === statusFilter);
+        }
+        if (trimmedSearch) {
+          visibleItems = visibleItems.filter((item) =>
+            item.title.toLowerCase().includes(trimmedSearch)
+          );
+        }
+
+        return {
+          ...group,
+          counts,
+          totalCount: group.items.length,
+          items: visibleItems,
+        };
+      })
+      .filter((group) => {
+        if (group.phase === pendingPhase) return true;
+        if (trimmedSearch && group.items.length === 0) return false;
+        return true;
+      });
+  }, [groups, phaseFilter, statusFilter, trimmedSearch, pendingPhase]);
+
+  const statusTotalCounts = useMemo(() => {
+    const counts: Record<Status | 'all', number> = {
+      all: items.length,
+      todo: 0,
+      in_progress: 0,
+      done: 0,
+      parked: 0,
+    };
+    for (const item of items) counts[item.status]++;
+    return counts;
+  }, [items]);
+
+  const phaseTotalCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const group of groups) counts[group.phase] = group.items.length;
+    return counts;
+  }, [groups]);
 
   const nextPhaseNumber = useMemo(() => getNextPhaseNumber(groups), [groups]);
 
@@ -499,54 +533,112 @@ export default function AdminScreen() {
         <Text style={styles.title}>Admin</Text>
       </View>
 
-      <View style={styles.filters}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterRow}>
-          {STATUS_FILTERS.map((filter) => (
+      <View style={styles.toolbar}>
+        <View style={styles.searchRow}>
+          <Feather name="search" size={14} color="#71717a" />
+          <TextInput
+            style={styles.searchInput}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholder="Search items..."
+            placeholderTextColor="#52525b"
+            autoCorrect={false}
+            autoCapitalize="none"
+          />
+          {searchQuery.length > 0 && (
             <TouchableOpacity
-              key={filter.value}
-              style={[styles.filterChip, statusFilter === filter.value && styles.filterChipActive]}
-              onPress={() => setStatusFilter(filter.value)}
+              onPress={() => setSearchQuery('')}
+              style={styles.searchClear}
+              activeOpacity={0.7}
+              hitSlop={8}
             >
-              <Text
-                style={[
-                  styles.filterChipText,
-                  statusFilter === filter.value && styles.filterChipTextActive,
-                ]}
-              >
-                {filter.label}
-              </Text>
+              <Feather name="x" size={14} color="#71717a" />
             </TouchableOpacity>
-          ))}
+          )}
+        </View>
+
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterRow}>
+          {STATUS_FILTERS.map((filter) => {
+            const isActive = statusFilter === filter.value;
+            const count = statusTotalCounts[filter.value];
+            return (
+              <TouchableOpacity
+                key={filter.value}
+                style={[styles.filterChip, isActive && styles.filterChipActive]}
+                onPress={() => setStatusFilter(filter.value)}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.filterChipText, isActive && styles.filterChipTextActive]}>
+                  {filter.label}
+                </Text>
+                <View style={[styles.filterChipCount, isActive && styles.filterChipCountActive]}>
+                  <Text
+                    style={[
+                      styles.filterChipCountText,
+                      isActive && styles.filterChipCountTextActive,
+                    ]}
+                  >
+                    {count}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            );
+          })}
         </ScrollView>
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterRow}>
           <TouchableOpacity
             style={[styles.filterChip, phaseFilter === 'all' && styles.filterChipActive]}
             onPress={() => setPhaseFilter('all')}
+            activeOpacity={0.7}
           >
             <Text
               style={[styles.filterChipText, phaseFilter === 'all' && styles.filterChipTextActive]}
             >
               All phases
             </Text>
-          </TouchableOpacity>
-
-          {groups.map((group) => (
-            <TouchableOpacity
-              key={group.phase}
-              style={[styles.filterChip, phaseFilter === group.phase && styles.filterChipActive]}
-              onPress={() => setPhaseFilter(group.phase)}
+            <View
+              style={[
+                styles.filterChipCount,
+                phaseFilter === 'all' && styles.filterChipCountActive,
+              ]}
             >
               <Text
                 style={[
-                  styles.filterChipText,
-                  phaseFilter === group.phase && styles.filterChipTextActive,
+                  styles.filterChipCountText,
+                  phaseFilter === 'all' && styles.filterChipCountTextActive,
                 ]}
               >
-                {group.phase}
+                {items.length}
               </Text>
-            </TouchableOpacity>
-          ))}
+            </View>
+          </TouchableOpacity>
+
+          {groups.map((group) => {
+            const isActive = phaseFilter === group.phase;
+            return (
+              <TouchableOpacity
+                key={group.phase}
+                style={[styles.filterChip, isActive && styles.filterChipActive]}
+                onPress={() => setPhaseFilter(group.phase)}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.filterChipText, isActive && styles.filterChipTextActive]}>
+                  {group.phase}
+                </Text>
+                <View style={[styles.filterChipCount, isActive && styles.filterChipCountActive]}>
+                  <Text
+                    style={[
+                      styles.filterChipCountText,
+                      isActive && styles.filterChipCountTextActive,
+                    ]}
+                  >
+                    {phaseTotalCounts[group.phase] ?? 0}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            );
+          })}
         </ScrollView>
       </View>
 
@@ -939,20 +1031,46 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#fff',
   },
-  filters: {
+  toolbar: {
     paddingHorizontal: 20,
+    gap: 10,
+    marginBottom: 14,
+  },
+  searchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 8,
-    marginBottom: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    backgroundColor: '#0d0d0f',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.06)',
+  },
+  searchInput: {
+    flex: 1,
+    color: '#fafafa',
+    fontSize: 14,
+    padding: 0,
+    margin: 0,
+  },
+  searchClear: {
+    padding: 2,
   },
   filterRow: {
     flexDirection: 'row',
   },
   filterChip: {
-    paddingHorizontal: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingLeft: 12,
+    paddingRight: 8,
     paddingVertical: 6,
-    borderRadius: 20,
+    borderRadius: 999,
     borderWidth: 1,
-    borderColor: '#333',
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: 'rgba(255, 255, 255, 0.02)',
     marginRight: 8,
   },
   filterChipActive: {
@@ -960,10 +1078,32 @@ const styles = StyleSheet.create({
     borderColor: '#4a9eff',
   },
   filterChipText: {
-    color: '#888',
+    color: '#a1a1aa',
     fontSize: 13,
   },
   filterChipTextActive: {
+    color: '#fff',
+    fontWeight: '600',
+  },
+  filterChipCount: {
+    minWidth: 20,
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  filterChipCountActive: {
+    backgroundColor: 'rgba(255, 255, 255, 0.22)',
+  },
+  filterChipCountText: {
+    color: '#a1a1aa',
+    fontSize: 11,
+    fontVariant: ['tabular-nums'],
+    lineHeight: 14,
+  },
+  filterChipCountTextActive: {
     color: '#fff',
     fontWeight: '600',
   },
