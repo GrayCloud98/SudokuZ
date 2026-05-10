@@ -47,24 +47,24 @@ type PhaseGroup = {
 };
 
 const STATUS_COLORS: Record<Status, string> = {
-  todo: '#888',
-  in_progress: '#f59e0b',
-  done: '#22c55e',
-  parked: '#a78bfa',
+  todo: '#94a3b8',
+  in_progress: '#fbbf24',
+  done: '#34d399',
+  parked: '#c4b5fd',
 };
 
 const STATUS_BG: Record<Status, string> = {
-  todo: 'rgba(136, 136, 136, 0.10)',
-  in_progress: 'rgba(245, 158, 11, 0.10)',
-  done: 'rgba(34, 197, 94, 0.10)',
-  parked: 'rgba(167, 139, 250, 0.10)',
+  todo: 'rgba(148, 163, 184, 0.12)',
+  in_progress: 'rgba(251, 191, 36, 0.12)',
+  done: 'rgba(52, 211, 153, 0.12)',
+  parked: 'rgba(196, 181, 253, 0.14)',
 };
 
 const STATUS_BORDER: Record<Status, string> = {
-  todo: 'rgba(136, 136, 136, 0.22)',
-  in_progress: 'rgba(245, 158, 11, 0.28)',
-  done: 'rgba(34, 197, 94, 0.28)',
-  parked: 'rgba(167, 139, 250, 0.28)',
+  todo: 'rgba(148, 163, 184, 0.30)',
+  in_progress: 'rgba(251, 191, 36, 0.30)',
+  done: 'rgba(52, 211, 153, 0.30)',
+  parked: 'rgba(196, 181, 253, 0.32)',
 };
 
 const STATUS_LABELS: Record<Status, string> = {
@@ -573,7 +573,7 @@ export default function AdminScreen() {
             hovered && styles.backButtonHover,
           ]}
         >
-          <Feather name="chevron-left" size={18} color="#4a9eff" />
+          <Feather name="chevron-left" size={18} color="#6366f1" />
           <Text style={styles.back}>Back</Text>
         </Pressable>
         <Text style={styles.title}>Admin</Text>
@@ -581,13 +581,13 @@ export default function AdminScreen() {
 
       <View style={styles.toolbar}>
         <View style={styles.searchRow}>
-          <Feather name="search" size={14} color="#71717a" />
+          <Feather name="search" size={14} color="#828599" />
           <TextInput
             style={styles.searchInput}
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholder="Search items..."
-            placeholderTextColor="#52525b"
+            placeholderTextColor="#6b6f85"
             autoCorrect={false}
             autoCapitalize="none"
           />
@@ -598,7 +598,7 @@ export default function AdminScreen() {
               activeOpacity={0.7}
               hitSlop={8}
             >
-              <Feather name="x" size={14} color="#71717a" />
+              <Feather name="x" size={14} color="#828599" />
             </TouchableOpacity>
           )}
         </View>
@@ -732,7 +732,7 @@ export default function AdminScreen() {
                     <Feather
                       name={isCollapsed ? 'chevron-down' : 'chevron-up'}
                       size={18}
-                      color="#71717a"
+                      color="#828599"
                     />
                   </View>
 
@@ -789,7 +789,7 @@ export default function AdminScreen() {
                             value={editPhaseSuffix}
                             onChangeText={setEditPhaseSuffix}
                             placeholder="phase name"
-                            placeholderTextColor="#555"
+                            placeholderTextColor="#6b6f85"
                             autoFocus
                           />
                         </View>
@@ -802,7 +802,7 @@ export default function AdminScreen() {
                             <Text style={styles.saveButtonText}>Save</Text>
                           </TouchableOpacity>
                           <TouchableOpacity onPress={resetPhaseEditor} style={styles.cancelButton}>
-                            <Feather name="x" size={13} color="#71717a" />
+                            <Feather name="x" size={13} color="#828599" />
                             <Text style={styles.cancelText}>Cancel</Text>
                           </TouchableOpacity>
                         </View>
@@ -813,7 +813,7 @@ export default function AdminScreen() {
                           onPress={() => startPhaseEdit(group)}
                           style={styles.iconAction}
                         >
-                          <Feather name="edit-2" size={12} color="#4a9eff" />
+                          <Feather name="edit-2" size={12} color="#6366f1" />
                           <Text style={styles.actionText}>Edit phase</Text>
                         </TouchableOpacity>
                       </View>
@@ -821,7 +821,7 @@ export default function AdminScreen() {
 
                     {visibleItems.length === 0 && group.phase !== pendingPhase && (
                       <View style={styles.phaseEmpty}>
-                        <Feather name="filter" size={14} color="#52525b" />
+                        <Feather name="filter" size={14} color="#6b6f85" />
                         <Text style={styles.phaseEmptyText}>No items match this filter</Text>
                       </View>
                     )}
@@ -926,14 +926,14 @@ export default function AdminScreen() {
                                     value={editTitle}
                                     onChangeText={setEditTitle}
                                     placeholder="title"
-                                    placeholderTextColor="#555"
+                                    placeholderTextColor="#6b6f85"
                                   />
                                   <TextInput
                                     style={[styles.editInput, styles.descriptionInput]}
                                     value={editDescription}
                                     onChangeText={setEditDescription}
                                     placeholder="description (optional)"
-                                    placeholderTextColor="#555"
+                                    placeholderTextColor="#6b6f85"
                                     multiline
                                     textAlignVertical="top"
                                   />
@@ -949,7 +949,7 @@ export default function AdminScreen() {
                                       onPress={resetItemEditor}
                                       style={styles.cancelButton}
                                     >
-                                      <Feather name="x" size={13} color="#71717a" />
+                                      <Feather name="x" size={13} color="#828599" />
                                       <Text style={styles.cancelText}>Cancel</Text>
                                     </TouchableOpacity>
                                   </View>
@@ -964,7 +964,7 @@ export default function AdminScreen() {
                                       onPress={() => startEdit(item)}
                                       style={styles.iconAction}
                                     >
-                                      <Feather name="edit-2" size={12} color="#4a9eff" />
+                                      <Feather name="edit-2" size={12} color="#6366f1" />
                                       <Text style={styles.actionText}>Edit</Text>
                                     </TouchableOpacity>
                                     <TouchableOpacity
@@ -990,7 +990,7 @@ export default function AdminScreen() {
                           value={newTitle}
                           onChangeText={setNewTitle}
                           placeholder="title"
-                          placeholderTextColor="#555"
+                          placeholderTextColor="#6b6f85"
                           autoFocus
                         />
                         <TextInput
@@ -998,7 +998,7 @@ export default function AdminScreen() {
                           value={newDescription}
                           onChangeText={setNewDescription}
                           placeholder="description (optional)"
-                          placeholderTextColor="#555"
+                          placeholderTextColor="#6b6f85"
                           multiline
                           textAlignVertical="top"
                         />
@@ -1011,7 +1011,7 @@ export default function AdminScreen() {
                             <Text style={styles.saveButtonText}>Add</Text>
                           </TouchableOpacity>
                           <TouchableOpacity onPress={resetAddForm} style={styles.cancelButton}>
-                            <Feather name="x" size={13} color="#71717a" />
+                            <Feather name="x" size={13} color="#828599" />
                             <Text style={styles.cancelText}>Cancel</Text>
                           </TouchableOpacity>
                         </View>
@@ -1026,7 +1026,7 @@ export default function AdminScreen() {
                           setAddingToPhase(group.phase);
                         }}
                       >
-                        <Feather name="plus" size={13} color="#52525b" />
+                        <Feather name="plus" size={13} color="#6b6f85" />
                         <Text style={styles.addButtonText}>Add item</Text>
                       </TouchableOpacity>
                     )}
@@ -1039,7 +1039,7 @@ export default function AdminScreen() {
           {filteredGroups.length === 0 && trimmedSearch.length > 0 && (
             <View style={styles.rootEmpty}>
               <View style={styles.rootEmptyIcon}>
-                <Feather name="search" size={20} color="#71717a" />
+                <Feather name="search" size={20} color="#828599" />
               </View>
               <Text style={styles.rootEmptyTitle}>No results</Text>
               <Text style={styles.rootEmptyBody}>
@@ -1051,7 +1051,7 @@ export default function AdminScreen() {
                 onPress={() => setSearchQuery('')}
                 activeOpacity={0.8}
               >
-                <Feather name="x" size={13} color="#fafafa" />
+                <Feather name="x" size={13} color="#f5f5fa" />
                 <Text style={styles.rootEmptyButtonText}>Clear search</Text>
               </TouchableOpacity>
             </View>
@@ -1063,7 +1063,7 @@ export default function AdminScreen() {
             !addingNewPhase && (
               <View style={styles.rootEmpty}>
                 <View style={styles.rootEmptyIcon}>
-                  <Feather name="layers" size={20} color="#71717a" />
+                  <Feather name="layers" size={20} color="#828599" />
                 </View>
                 <Text style={styles.rootEmptyTitle}>No phases yet</Text>
                 <Text style={styles.rootEmptyBody}>
@@ -1074,7 +1074,7 @@ export default function AdminScreen() {
                   onPress={startNewPhase}
                   activeOpacity={0.8}
                 >
-                  <Feather name="plus" size={13} color="#fafafa" />
+                  <Feather name="plus" size={13} color="#f5f5fa" />
                   <Text style={styles.rootEmptyButtonText}>Create first phase</Text>
                 </TouchableOpacity>
               </View>
@@ -1089,7 +1089,7 @@ export default function AdminScreen() {
                   value={newPhaseSuffix}
                   onChangeText={setNewPhaseSuffix}
                   placeholder="phase name"
-                  placeholderTextColor="#555"
+                  placeholderTextColor="#6b6f85"
                   autoFocus
                 />
               </View>
@@ -1099,14 +1099,14 @@ export default function AdminScreen() {
                   <Text style={styles.saveButtonText}>Create phase</Text>
                 </TouchableOpacity>
                 <TouchableOpacity onPress={cancelNewPhase} style={styles.cancelButton}>
-                  <Feather name="x" size={13} color="#71717a" />
+                  <Feather name="x" size={13} color="#828599" />
                   <Text style={styles.cancelText}>Cancel</Text>
                 </TouchableOpacity>
               </View>
             </View>
           ) : items.length > 0 ? (
             <TouchableOpacity style={styles.newPhaseButton} onPress={startNewPhase}>
-              <Feather name="plus" size={14} color="#52525b" />
+              <Feather name="plus" size={14} color="#6b6f85" />
               <Text style={styles.newPhaseButtonText}>New phase</Text>
             </TouchableOpacity>
           ) : null}
@@ -1159,7 +1159,7 @@ export default function AdminScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f0f0f',
+    backgroundColor: '#0b0d1f',
     paddingTop: 60,
   },
   header: {
@@ -1178,17 +1178,17 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   backButtonHover: {
-    backgroundColor: 'rgba(74, 158, 255, 0.08)',
+    backgroundColor: 'rgba(99, 102, 241, 0.14)',
   },
   back: {
     fontSize: 14,
-    color: '#4a9eff',
+    color: '#6366f1',
     fontWeight: '500',
   },
   title: {
     fontSize: 22,
     fontWeight: '600',
-    color: '#fafafa',
+    color: '#f5f5fa',
     letterSpacing: -0.4,
   },
   toolbar: {
@@ -1202,14 +1202,14 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingHorizontal: 12,
     paddingVertical: 9,
-    backgroundColor: '#0d0d0f',
+    backgroundColor: '#0e1124',
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.06)',
+    borderColor: 'rgba(99, 102, 241, 0.12)',
   },
   searchInput: {
     flex: 1,
-    color: '#fafafa',
+    color: '#f5f5fa',
     fontSize: 14,
     padding: 0,
     margin: 0,
@@ -1229,20 +1229,25 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
-    backgroundColor: 'rgba(255, 255, 255, 0.02)',
+    borderColor: 'rgba(99, 102, 241, 0.18)',
+    backgroundColor: 'rgba(99, 102, 241, 0.05)',
     marginRight: 8,
   },
   filterChipActive: {
-    backgroundColor: '#4a9eff',
-    borderColor: '#4a9eff',
+    backgroundColor: '#6366f1',
+    borderColor: '#818cf8',
+    shadowColor: '#6366f1',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.55,
+    shadowRadius: 14,
+    elevation: 6,
   },
   filterChipHover: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderColor: 'rgba(255, 255, 255, 0.14)',
+    backgroundColor: 'rgba(99, 102, 241, 0.10)',
+    borderColor: 'rgba(99, 102, 241, 0.26)',
   },
   filterChipText: {
-    color: '#a1a1aa',
+    color: '#a8aac1',
     fontSize: 13,
   },
   filterChipTextActive: {
@@ -1254,7 +1259,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
     paddingVertical: 1,
     borderRadius: 999,
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    backgroundColor: 'rgba(99, 102, 241, 0.12)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1262,7 +1267,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.22)',
   },
   filterChipCountText: {
-    color: '#a1a1aa',
+    color: '#a8aac1',
     fontSize: 11,
     fontVariant: ['tabular-nums'],
     lineHeight: 14,
@@ -1272,7 +1277,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   loading: {
-    color: '#555',
+    color: '#6b6f85',
     textAlign: 'center',
     marginTop: 40,
   },
@@ -1283,24 +1288,24 @@ const styles = StyleSheet.create({
   skelTitle: {
     height: 14,
     borderRadius: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: 'rgba(99, 102, 241, 0.18)',
   },
   skelChevron: {
     width: 18,
     height: 18,
     borderRadius: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    backgroundColor: 'rgba(99, 102, 241, 0.12)',
   },
   skelTrack: {
     height: 4,
     borderRadius: 999,
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    backgroundColor: 'rgba(99, 102, 241, 0.12)',
   },
   skelChip: {
     height: 10,
     width: 78,
     borderRadius: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    backgroundColor: 'rgba(99, 102, 241, 0.12)',
   },
   list: {
     flex: 1,
@@ -1312,9 +1317,9 @@ const styles = StyleSheet.create({
   phaseGroup: {
     marginBottom: 12,
     borderRadius: 10,
-    backgroundColor: '#111113',
+    backgroundColor: '#14172e',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.06)',
+    borderColor: 'rgba(99, 102, 241, 0.12)',
     overflow: 'hidden',
   },
   phaseHeader: {
@@ -1335,22 +1340,24 @@ const styles = StyleSheet.create({
     paddingRight: 12,
   },
   phaseTitle: {
-    color: '#fafafa',
+    color: '#f5f5fa',
     fontSize: 15,
     fontWeight: '600',
     letterSpacing: -0.2,
     flexShrink: 1,
   },
   phaseCount: {
-    color: '#71717a',
+    color: '#828599',
     fontSize: 12,
     fontVariant: ['tabular-nums'],
   },
   progressTrack: {
-    height: 4,
+    height: 6,
     flexDirection: 'row',
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    backgroundColor: 'rgba(99, 102, 241, 0.12)',
     borderRadius: 999,
+    borderWidth: 1,
+    borderColor: 'rgba(99, 102, 241, 0.18)',
     overflow: 'hidden',
   },
   progressSegment: {
@@ -1373,7 +1380,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
   phaseStatText: {
-    color: '#a1a1aa',
+    color: '#a8aac1',
     fontSize: 11,
     fontVariant: ['tabular-nums'],
     letterSpacing: 0.2,
@@ -1397,7 +1404,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   phasePrefix: {
-    color: '#888',
+    color: '#a8aac1',
     fontSize: 14,
     fontWeight: '600',
   },
@@ -1405,7 +1412,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   empty: {
-    color: '#444',
+    color: '#6b6f85',
     fontSize: 13,
     paddingVertical: 8,
     textAlign: 'center',
@@ -1418,7 +1425,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   phaseEmptyText: {
-    color: '#71717a',
+    color: '#828599',
     fontSize: 13,
   },
   rootEmpty: {
@@ -1431,64 +1438,69 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 999,
-    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    backgroundColor: 'rgba(99, 102, 241, 0.08)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: 'rgba(99, 102, 241, 0.18)',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 8,
   },
   rootEmptyTitle: {
-    color: '#fafafa',
+    color: '#f5f5fa',
     fontSize: 16,
     fontWeight: '600',
     letterSpacing: -0.2,
   },
   rootEmptyBody: {
-    color: '#a1a1aa',
+    color: '#a8aac1',
     fontSize: 13,
     textAlign: 'center',
     lineHeight: 19,
     maxWidth: 320,
   },
   rootEmptyQuery: {
-    color: '#fafafa',
+    color: '#f5f5fa',
     fontWeight: '500',
   },
   rootEmptyButton: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#4a9eff',
+    backgroundColor: '#6366f1',
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 8,
     marginTop: 12,
+    shadowColor: '#6366f1',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 18,
+    elevation: 8,
   },
   rootEmptyButtonText: {
-    color: '#fafafa',
+    color: '#f5f5fa',
     fontSize: 13,
     fontWeight: '600',
   },
   item: {
-    backgroundColor: '#161618',
+    backgroundColor: '#1d2147',
     borderRadius: 8,
     borderLeftWidth: 3,
     borderLeftColor: 'transparent',
     borderTopWidth: 1,
     borderRightWidth: 1,
     borderBottomWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.04)',
-    borderRightColor: 'rgba(255, 255, 255, 0.04)',
-    borderBottomColor: 'rgba(255, 255, 255, 0.04)',
+    borderTopColor: 'rgba(99, 102, 241, 0.08)',
+    borderRightColor: 'rgba(99, 102, 241, 0.08)',
+    borderBottomColor: 'rgba(99, 102, 241, 0.08)',
     overflow: 'hidden',
     marginBottom: 6,
   },
   itemExpandedCard: {
-    backgroundColor: '#1c1c1f',
-    borderTopColor: 'rgba(255, 255, 255, 0.08)',
-    borderRightColor: 'rgba(255, 255, 255, 0.08)',
-    borderBottomColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: '#232752',
+    borderTopColor: 'rgba(99, 102, 241, 0.18)',
+    borderRightColor: 'rgba(99, 102, 241, 0.18)',
+    borderBottomColor: 'rgba(99, 102, 241, 0.18)',
   },
   itemRow: {
     flexDirection: 'row',
@@ -1534,7 +1546,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   statusPickerOptionActive: {
-    borderColor: 'rgba(255, 255, 255, 0.32)',
+    borderColor: 'rgba(99, 102, 241, 0.50)',
   },
   itemTitleRow: {
     flex: 1,
@@ -1545,13 +1557,13 @@ const styles = StyleSheet.create({
     opacity: 0.85,
   },
   itemTitle: {
-    color: '#e4e4e7',
+    color: '#f5f5fa',
     fontSize: 14,
     letterSpacing: -0.1,
   },
   itemTitleDone: {
     textDecorationLine: 'line-through',
-    color: '#52525b',
+    color: '#6b6f85',
   },
   itemExpanded: {
     paddingHorizontal: 14,
@@ -1559,7 +1571,7 @@ const styles = StyleSheet.create({
     paddingTop: 2,
   },
   itemDescription: {
-    color: '#a1a1aa',
+    color: '#a8aac1',
     fontSize: 13,
     marginBottom: 12,
     lineHeight: 19,
@@ -1574,7 +1586,7 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   actionText: {
-    color: '#4a9eff',
+    color: '#6366f1',
     fontSize: 13,
   },
   deleteText: {
@@ -1593,10 +1605,10 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     paddingHorizontal: 10,
     paddingVertical: 8,
-    color: '#fff',
+    color: '#f5f5fa',
     fontSize: 14,
     borderWidth: 1,
-    borderColor: '#333',
+    borderColor: 'rgba(99, 102, 241, 0.18)',
   },
   descriptionInput: {
     minHeight: 80,
@@ -1610,10 +1622,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#4a9eff',
+    backgroundColor: '#6366f1',
     paddingHorizontal: 14,
     paddingVertical: 7,
     borderRadius: 6,
+    shadowColor: '#6366f1',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.45,
+    shadowRadius: 12,
+    elevation: 4,
   },
   saveButtonText: {
     color: '#fff',
@@ -1627,7 +1644,7 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
   },
   cancelText: {
-    color: '#71717a',
+    color: '#828599',
     fontSize: 13,
   },
   addButton: {
@@ -1638,7 +1655,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   addButtonText: {
-    color: '#52525b',
+    color: '#6b6f85',
     fontSize: 13,
   },
   newPhaseForm: {
@@ -1656,11 +1673,11 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#222',
+    borderColor: 'rgba(99, 102, 241, 0.18)',
     marginBottom: 16,
   },
   newPhaseButtonText: {
-    color: '#52525b',
+    color: '#6b6f85',
     fontSize: 14,
   },
   modalBackdrop: {
@@ -1673,10 +1690,10 @@ const styles = StyleSheet.create({
   modalCard: {
     width: '100%',
     maxWidth: 400,
-    backgroundColor: '#161618',
+    backgroundColor: '#1d2147',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: 'rgba(99, 102, 241, 0.18)',
     padding: 22,
     gap: 10,
   },
@@ -1692,18 +1709,18 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   modalTitle: {
-    color: '#fafafa',
+    color: '#f5f5fa',
     fontSize: 16,
     fontWeight: '600',
     letterSpacing: -0.2,
   },
   modalBody: {
-    color: '#a1a1aa',
+    color: '#a8aac1',
     fontSize: 13,
     lineHeight: 20,
   },
   modalEmphasis: {
-    color: '#fafafa',
+    color: '#f5f5fa',
     fontWeight: '500',
   },
   modalActions: {
@@ -1719,7 +1736,7 @@ const styles = StyleSheet.create({
     borderRadius: 7,
   },
   modalCancelText: {
-    color: '#a1a1aa',
+    color: '#a8aac1',
     fontSize: 13,
     fontWeight: '500',
   },
@@ -1731,6 +1748,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 7,
+    shadowColor: '#ef4444',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.4,
+    shadowRadius: 14,
+    elevation: 6,
   },
   modalDeleteText: {
     color: '#fff',

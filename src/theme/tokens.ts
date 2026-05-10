@@ -1,41 +1,43 @@
 /**
  * Design tokens — single source of truth for the admin surface.
- * Aiming for a Vercel/Stripe-style dark theme: near-black background, layered
- * surfaces with subtle borders, restrained accent, semantic statuses.
+ * Indigo/glass dark theme: deep-indigo base, layered surfaces with subtle
+ * indigo-tinted borders, an indigo accent that glows on hover/active, and
+ * semantic status colors that hold up against the cooler base.
  */
 
 export const colors = {
   // Surfaces (back-to-front layering)
-  background: '#0a0a0a',
-  surface: '#111113',
-  surfaceElevated: '#161618',
-  surfaceHover: '#1c1c1f',
-  surfaceInput: '#0d0d0f',
+  background: '#0b0d1f',
+  surface: '#14172e',
+  surfaceElevated: '#1d2147',
+  surfaceHover: '#232752',
+  surfaceInput: '#0e1124',
 
-  // Borders
-  border: 'rgba(255, 255, 255, 0.06)',
-  borderStrong: 'rgba(255, 255, 255, 0.12)',
-  borderFocus: '#3b82f6',
+  // Borders (indigo-tinted whites for cohesion with the accent)
+  border: 'rgba(99, 102, 241, 0.10)',
+  borderStrong: 'rgba(99, 102, 241, 0.22)',
+  borderFocus: '#6366f1',
 
   // Text
-  textPrimary: '#fafafa',
-  textSecondary: '#a1a1aa',
-  textTertiary: '#71717a',
-  textMuted: '#52525b',
-  textDisabled: '#3f3f46',
-  textInverse: '#0a0a0a',
+  textPrimary: '#f5f5fa',
+  textSecondary: '#a8aac1',
+  textTertiary: '#828599',
+  textMuted: '#6b6f85',
+  textDisabled: '#4b4f63',
+  textInverse: '#0b0d1f',
 
-  // Accent (interactive blue)
-  accent: '#3b82f6',
-  accentHover: '#2563eb',
-  accentSubtle: 'rgba(59, 130, 246, 0.12)',
-  accentBorder: 'rgba(59, 130, 246, 0.32)',
+  // Accent (interactive indigo)
+  accent: '#6366f1',
+  accentHover: '#4f46e5',
+  accentSubtle: 'rgba(99, 102, 241, 0.14)',
+  accentBorder: 'rgba(99, 102, 241, 0.36)',
+  accentGlow: 'rgba(99, 102, 241, 0.40)',
 
   // Danger (destructive actions)
   danger: '#ef4444',
   dangerHover: '#dc2626',
-  dangerSubtle: 'rgba(239, 68, 68, 0.12)',
-  dangerBorder: 'rgba(239, 68, 68, 0.32)',
+  dangerSubtle: 'rgba(239, 68, 68, 0.14)',
+  dangerBorder: 'rgba(239, 68, 68, 0.36)',
 } as const;
 
 export type StatusKey = 'todo' | 'in_progress' | 'done' | 'parked';
