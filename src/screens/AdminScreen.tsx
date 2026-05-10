@@ -794,8 +794,11 @@ export default function AdminScreen() {
                       </View>
                     )}
 
-                    {visibleItems.length === 0 && (
-                      <Text style={styles.empty}>No items match this filter</Text>
+                    {visibleItems.length === 0 && group.phase !== pendingPhase && (
+                      <View style={styles.phaseEmpty}>
+                        <Feather name="filter" size={14} color="#52525b" />
+                        <Text style={styles.phaseEmptyText}>No items match this filter</Text>
+                      </View>
                     )}
 
                     {visibleItems.map((item) => {
@@ -1005,6 +1008,50 @@ export default function AdminScreen() {
             );
           })}
 
+          {filteredGroups.length === 0 && trimmedSearch.length > 0 && (
+            <View style={styles.rootEmpty}>
+              <View style={styles.rootEmptyIcon}>
+                <Feather name="search" size={20} color="#71717a" />
+              </View>
+              <Text style={styles.rootEmptyTitle}>No results</Text>
+              <Text style={styles.rootEmptyBody}>
+                Nothing matches{' '}
+                <Text style={styles.rootEmptyQuery}>&ldquo;{searchQuery}&rdquo;</Text>
+              </Text>
+              <TouchableOpacity
+                style={styles.rootEmptyButton}
+                onPress={() => setSearchQuery('')}
+                activeOpacity={0.8}
+              >
+                <Feather name="x" size={13} color="#fafafa" />
+                <Text style={styles.rootEmptyButtonText}>Clear search</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {filteredGroups.length === 0 &&
+            trimmedSearch.length === 0 &&
+            items.length === 0 &&
+            !addingNewPhase && (
+              <View style={styles.rootEmpty}>
+                <View style={styles.rootEmptyIcon}>
+                  <Feather name="layers" size={20} color="#71717a" />
+                </View>
+                <Text style={styles.rootEmptyTitle}>No phases yet</Text>
+                <Text style={styles.rootEmptyBody}>
+                  Create your first phase to start tracking the roadmap.
+                </Text>
+                <TouchableOpacity
+                  style={styles.rootEmptyButton}
+                  onPress={startNewPhase}
+                  activeOpacity={0.8}
+                >
+                  <Feather name="plus" size={13} color="#fafafa" />
+                  <Text style={styles.rootEmptyButtonText}>Create first phase</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
           {addingNewPhase ? (
             <View style={styles.newPhaseForm}>
               <View style={styles.phaseNameRow}>
@@ -1029,12 +1076,12 @@ export default function AdminScreen() {
                 </TouchableOpacity>
               </View>
             </View>
-          ) : (
+          ) : items.length > 0 ? (
             <TouchableOpacity style={styles.newPhaseButton} onPress={startNewPhase}>
               <Feather name="plus" size={14} color="#52525b" />
               <Text style={styles.newPhaseButtonText}>New phase</Text>
             </TouchableOpacity>
-          )}
+          ) : null}
         </ScrollView>
       )}
     </View>
@@ -1280,6 +1327,66 @@ const styles = StyleSheet.create({
     fontSize: 13,
     paddingVertical: 8,
     textAlign: 'center',
+  },
+  phaseEmpty: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 16,
+  },
+  phaseEmptyText: {
+    color: '#71717a',
+    fontSize: 13,
+  },
+  rootEmpty: {
+    alignItems: 'center',
+    paddingVertical: 56,
+    paddingHorizontal: 24,
+    gap: 8,
+  },
+  rootEmptyIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  rootEmptyTitle: {
+    color: '#fafafa',
+    fontSize: 16,
+    fontWeight: '600',
+    letterSpacing: -0.2,
+  },
+  rootEmptyBody: {
+    color: '#a1a1aa',
+    fontSize: 13,
+    textAlign: 'center',
+    lineHeight: 19,
+    maxWidth: 320,
+  },
+  rootEmptyQuery: {
+    color: '#fafafa',
+    fontWeight: '500',
+  },
+  rootEmptyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#4a9eff',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 8,
+    marginTop: 12,
+  },
+  rootEmptyButtonText: {
+    color: '#fafafa',
+    fontSize: 13,
+    fontWeight: '600',
   },
   item: {
     backgroundColor: '#161618',
