@@ -14,6 +14,7 @@ import {
   UIManager,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
@@ -565,7 +566,13 @@ export default function AdminScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.hero}>
+      <LinearGradient
+        colors={['#1d2147', '#15183a', '#0b0d1f']}
+        locations={[0, 0.55, 1]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
+        style={styles.hero}
+      >
         <Pressable
           onPress={() => router.back()}
           style={({ hovered }: PressState) => [
@@ -618,7 +625,13 @@ export default function AdminScreen() {
               },
             ] as const
           ).map((stat) => (
-            <View key={stat.key} style={styles.heroStatCard}>
+            <LinearGradient
+              key={stat.key}
+              colors={['#1a1d3c', '#14172e']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.heroStatCard}
+            >
               <View
                 style={[
                   styles.heroStatDot,
@@ -627,14 +640,17 @@ export default function AdminScreen() {
               />
               <Text style={styles.heroStatValue}>{stat.value}</Text>
               <Text style={styles.heroStatLabel}>{stat.label}</Text>
-            </View>
+            </LinearGradient>
           ))}
         </View>
 
         {items.length > 0 && (
           <View style={styles.heroProgress}>
             <View style={styles.heroProgressBarTrack}>
-              <View
+              <LinearGradient
+                colors={['#a5b4fc', '#818cf8', '#6366f1']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
                 style={[
                   styles.heroProgressBarFill,
                   {
@@ -648,7 +664,7 @@ export default function AdminScreen() {
             </Text>
           </View>
         )}
-      </View>
+      </LinearGradient>
 
       <View style={styles.toolbar}>
         <View style={styles.searchRow}>
@@ -787,7 +803,13 @@ export default function AdminScreen() {
             const breakdownOrder: Status[] = ['done', 'in_progress', 'todo', 'parked'];
 
             return (
-              <View key={group.phase} style={styles.phaseGroup}>
+              <LinearGradient
+                key={group.phase}
+                colors={['#1a1d3c', '#14172e']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.phaseGroup}
+              >
                 <TouchableOpacity
                   style={styles.phaseHeader}
                   onPress={() => togglePhase(group.phase)}
@@ -1103,7 +1125,7 @@ export default function AdminScreen() {
                     )}
                   </View>
                 )}
-              </View>
+              </LinearGradient>
             );
           })}
 
