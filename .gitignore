@@ -44,3 +44,6 @@ supabase/.temp/
 
 # personal assets
 /personal
+
+# Claude Code (local-only personal settings)
+.claude/settings.local.json
