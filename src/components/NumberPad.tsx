@@ -1,27 +1,43 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import * as B from '../logic/board';
+import { colors, spacing, radius } from '../theme/theme';
 
 interface Props {
   onNumberPress: (num: B.CellValue) => void;
-  onErase: () => void;
+  gameBoard: B.GameBoard;
 }
 
-export function NumberPad({ onNumberPress, onErase }: Props) {
+function countRemaining(gameBoard: B.GameBoard, num: number): number {
+  let placed = 0;
+  for (const row of gameBoard.values) {
+    for (const cell of row) {
+      if (cell === num) placed++;
+    }
+  }
+  return B.GRID_SIZE - placed;
+}
+
+export function NumberPad({ onNumberPress, gameBoard }: Props) {
   return (
     <View style={styles.container}>
-      {[1, 2, 3, 4, 5, 6].map((num) => (
-        <TouchableOpacity
-          key={num}
-          style={styles.button}
-          onPress={() => onNumberPress(num as B.CellValue)}
-        >
-          <Text style={styles.buttonText}>{num}</Text>
-        </TouchableOpacity>
-      ))}
-      <TouchableOpacity style={[styles.button, styles.eraseButton]} onPress={onErase}>
-        <Text style={styles.buttonText}>✕</Text>
-      </TouchableOpacity>
+      {[1, 2, 3, 4, 5, 6].map((num) => {
+        const remaining = countRemaining(gameBoard, num);
+        const disabled = remaining === 0;
+        return (
+          <TouchableOpacity
+            key={num}
+            style={[styles.button, disabled && styles.buttonDisabled]}
+            onPress={() => !disabled && onNumberPress(num as B.CellValue)}
+            activeOpacity={disabled ? 1 : 0.65}
+          >
+            <Text style={[styles.numText, disabled && styles.numTextDisabled]}>{num}</Text>
+            <Text style={[styles.countText, disabled && styles.countTextDisabled]}>
+              {remaining}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
     </View>
   );
 }
@@ -29,26 +45,39 @@ export function NumberPad({ onNumberPress, onErase }: Props) {
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    marginTop: 24,
-    gap: 10,
+    gap: spacing.sm,
+    paddingHorizontal: spacing.sm,
   },
   button: {
-    width: 55,
-    height: 55,
+    flex: 1,
+    height: 64,
+    backgroundColor: colors.numBg,
+    borderRadius: radius.lg,
     borderWidth: 1,
-    borderColor: '#999',
-    borderRadius: 8,
+    borderColor: colors.numBorder,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#fff',
+    gap: 2,
   },
-  eraseButton: {
-    borderColor: '#c00',
+  buttonDisabled: {
+    opacity: 0.3,
   },
-  buttonText: {
-    fontSize: 22,
-    color: '#222',
+  numText: {
+    fontSize: 26,
+    fontWeight: '700',
+    color: colors.numText,
+    lineHeight: 30,
+  },
+  numTextDisabled: {
+    color: colors.numDisabled,
+  },
+  countText: {
+    fontSize: 11,
+    color: colors.numCount,
+    fontWeight: '500',
+    lineHeight: 13,
+  },
+  countTextDisabled: {
+    color: colors.numDisabled,
   },
 });
