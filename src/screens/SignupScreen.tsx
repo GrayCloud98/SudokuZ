@@ -160,6 +160,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bg,
     padding: spacing['2xl'],
     paddingTop: spacing['2xl'],
+    width: '100%',
+    maxWidth: 480,
+    alignSelf: 'center',
   },
   backBtn: {
     width: 36,
