@@ -1,68 +1,85 @@
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
-import { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
+import { Feather } from '@expo/vector-icons';
+import { colors, fonts, spacing, radius } from '../theme/theme';
+import { useHover } from '../hooks/useHover';
+import type { Difficulty } from '../logic/generator';
 
-function getAvatarColor(seed: string): string {
-  let hash = 0;
-  for (let i = 0; i < seed.length; i++) {
-    hash = seed.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const hue = Math.abs(hash) % 360;
-  return `hsl(${hue}, 65%, 50%)`;
+interface Props {
+  difficulty: Difficulty;
+  time: string;
+  mistakes: number;
+  isPaused: boolean;
+  onTogglePause: () => void;
 }
 
-export function Header() {
-  const { user, isAdmin, isGuest, isLoading, signOut } = useAuth();
+const DIFFICULTY_COLORS: Record<Difficulty, string> = {
+  easy: '#10b981',
+  medium: '#f59e0b',
+  hard: '#ef4444',
+};
+
+function IconButton({
+  icon,
+  onPress,
+  size = 18,
+}: {
+  icon: React.ComponentProps<typeof Feather>['name'];
+  onPress: () => void;
+  size?: number;
+}) {
+  const { hovered, hoverProps } = useHover();
+  return (
+    <Pressable
+      style={[styles.iconBtn, hovered && styles.iconBtnHovered]}
+      onPress={onPress}
+      {...hoverProps}
+    >
+      <Feather
+        name={icon}
+        size={size}
+        color={hovered ? colors.textPrimary : colors.textSecondary}
+      />
+    </Pressable>
+  );
+}
+
+export function Header({ difficulty, time, mistakes, isPaused, onTogglePause }: Props) {
+  const { user, isAdmin, signOut } = useAuth();
   const router = useRouter();
 
-  const [guestUsername] = useState(() => {
-    const existing = sessionStorage.getItem('guestUsername');
-    if (existing) return existing;
-    const generated = `guest_${Math.random().toString(36).slice(2, 8)}`;
-    sessionStorage.setItem('guestUsername', generated);
-    return generated;
-  });
-
-  const username = isGuest
-    ? guestUsername
-    : (user?.user_metadata?.user_name ??
-      user?.user_metadata?.name ??
-      user?.user_metadata?.username ??
-      `player_${user?.id?.slice(0, 6) ?? Math.random().toString(36).slice(2, 8)}`);
-
-  const avatarLetter = username[0].toUpperCase();
-  const avatarColor = getAvatarColor(username);
-
-  useEffect(() => {
-    if (isLoading) return;
-    if (!user && !isGuest) {
-      router.replace('/(auth)/login');
-    }
-  }, [user, isGuest, isLoading]);
-
-  async function handleSignOut() {
-    await signOut();
-  }
+  const isLoggedIn = !!user;
 
   return (
     <View style={styles.container}>
-      <View style={styles.profile}>
-        <View style={[styles.avatar, { backgroundColor: avatarColor }]}>
-          <Text style={styles.avatarLetter}>{avatarLetter}</Text>
+      <View style={styles.left}>
+        <IconButton icon="arrow-left" size={20} onPress={() => router.replace('/')} />
+      </View>
+
+      <View style={styles.center}>
+        <View style={[styles.diffBadge, { borderColor: DIFFICULTY_COLORS[difficulty] }]}>
+          <Text style={[styles.diffText, { color: DIFFICULTY_COLORS[difficulty] }]}>
+            {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
+          </Text>
         </View>
-        <Text style={styles.username}>{username}</Text>
+        <View style={styles.timerRow}>
+          <Text style={styles.timer}>{time}</Text>
+          <IconButton icon={isPaused ? 'play' : 'pause'} size={15} onPress={onTogglePause} />
+        </View>
+        {mistakes > 0 && (
+          <Text style={styles.mistakes}>
+            {'✕'.repeat(Math.min(mistakes, 5))} mistake{mistakes !== 1 ? 's' : ''}
+          </Text>
+        )}
       </View>
 
       <View style={styles.right}>
-        {isAdmin && (
-          <TouchableOpacity onPress={() => router.push('/(game)/admin')}>
-            <Text style={styles.adminLink}>admin</Text>
-          </TouchableOpacity>
-        )}
-        <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
-          <Text style={styles.signOutText}>{isGuest ? 'Sign in' : 'Sign out'}</Text>
-        </TouchableOpacity>
+        {isAdmin && <IconButton icon="settings" onPress={() => router.push('/(game)/admin')} />}
+        <IconButton
+          icon={isLoggedIn ? 'log-out' : 'user'}
+          onPress={() => (isLoggedIn ? signOut() : router.push('/(auth)/login'))}
+        />
       </View>
     </View>
   );
@@ -73,53 +90,68 @@ const styles = StyleSheet.create({
     width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: colors.border,
+    backgroundColor: colors.bg,
   },
-  profile: {
+  left: {
+    flexDirection: 'row',
+    minWidth: 80,
+  },
+  center: {
+    flex: 1,
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  diffBadge: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: radius.full,
+    borderWidth: 1,
+  },
+  diffText: {
+    fontSize: 11,
+    fontFamily: fonts.bold,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+  },
+  timerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: spacing.sm,
   },
-  avatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
+  timer: {
+    fontSize: 28,
+    fontFamily: fonts.bold,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    letterSpacing: 1,
+    fontVariant: ['tabular-nums'],
   },
-  avatarLetter: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  username: {
-    fontSize: 15,
+  mistakes: {
+    fontSize: 12,
+    color: colors.textError,
+    fontFamily: fonts.semibold,
     fontWeight: '600',
-  },
-  signOutButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#ccc',
-  },
-  signOutText: {
-    fontSize: 14,
-    color: '#555',
   },
   right: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
+    justifyContent: 'flex-end',
+    gap: spacing.sm,
+    minWidth: 80,
   },
-  adminLink: {
-    fontSize: 14,
-    color: '#007bff',
-    fontWeight: '600',
-    marginRight: 12,
+  iconBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surface,
+  },
+  iconBtnHovered: {
+    backgroundColor: colors.surfaceElevated,
   },
 });

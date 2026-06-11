@@ -221,7 +221,7 @@ export default function AdminScreen() {
 
   useEffect(() => {
     if (!isAdmin) {
-      router.replace('/(game)');
+      router.replace('/');
     }
   }, [isAdmin, router]);
 
