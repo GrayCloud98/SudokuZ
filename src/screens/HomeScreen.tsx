@@ -9,9 +9,9 @@ import { useHover } from '@/hooks/useHover';
 import type { Difficulty } from '@/logic/generator';
 
 const DIFFICULTIES: { key: Difficulty; label: string; desc: string; color: string }[] = [
-  { key: 'easy', label: 'Easy', desc: '24 clues · a gentle warm-up', color: '#10b981' },
-  { key: 'medium', label: 'Medium', desc: '18 clues · a fair fight', color: '#f59e0b' },
-  { key: 'hard', label: 'Hard', desc: '14 clues · bring notes', color: '#ef4444' },
+  { key: 'easy', label: 'Easy', desc: 'Solve 12 cells · a gentle warm-up', color: '#10b981' },
+  { key: 'medium', label: 'Medium', desc: 'Solve 18 cells · a fair fight', color: '#f59e0b' },
+  { key: 'hard', label: 'Hard', desc: 'Solve 22 cells · bring notes', color: '#ef4444' },
 ];
 
 // Mini 2×3 grid mark — the shape of a 6×6 sudoku box

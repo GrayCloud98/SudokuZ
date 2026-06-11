@@ -121,9 +121,11 @@ function reducer(state: GameState, action: Action): GameState {
       const updatedMeta = applyErrors(newValues, newMeta);
       const isSolved = V.isBoardSolved(newValues);
 
-      const isWrongPlacement =
-        action.value !== B.EMPTY && action.value !== state.solution[row][col];
-      const mistakes = state.mistakes + (isWrongPlacement ? 1 : 0);
+      // A mistake is a placement the player can see is wrong (it conflicts with
+      // a visible row/col/box duplicate), not a quiet mismatch with the hidden
+      // solution — slips that break no rule shouldn't be punished.
+      const isMistake = action.value !== B.EMPTY && updatedMeta[row][col].isError;
+      const mistakes = state.mistakes + (isMistake ? 1 : 0);
 
       return {
         ...state,

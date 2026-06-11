@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useRef } from 'react';
+﻿import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import * as G from '../logic/generator';
 import { colors, fonts, spacing, radius, USE_NATIVE_DRIVER } from '../theme/theme';
 import { useHover } from '../hooks/useHover';
@@ -130,11 +131,15 @@ function DifficultyButton({
 }
 
 export function WinScreen({ onNewGame, onWin, time, difficulty, mistakes }: Props) {
+  const router = useRouter();
   const { height } = useWindowDimensions();
   const confetti = useRef(buildConfetti()).current;
   const cardScale = useRef(new Animated.Value(0.85)).current;
   const cardOpacity = useRef(new Animated.Value(0)).current;
   const { hovered: primaryHovered, hoverProps: primaryHoverProps } = useHover();
+  const { hovered: homeHovered, hoverProps: homeHoverProps } = useHover();
+  // Picking a difficulty only selects it — the start button is the deliberate step
+  const [nextDifficulty, setNextDifficulty] = useState<G.Difficulty>(NEXT_DIFFICULTIES[difficulty]);
 
   useEffect(() => {
     onWin();
@@ -197,25 +202,36 @@ export function WinScreen({ onNewGame, onWin, time, difficulty, mistakes }: Prop
           </View>
 
           <View style={styles.actions}>
-            <Pressable
-              style={[styles.primaryBtn, primaryHovered && styles.primaryBtnHovered]}
-              onPress={() => onNewGame(NEXT_DIFFICULTIES[difficulty])}
-              {...primaryHoverProps}
-            >
-              <Text style={styles.primaryBtnText}>Next puzzle</Text>
-              <Feather name="arrow-right" size={16} color="#fff" />
-            </Pressable>
-
+            <Text style={styles.actionsLabel}>Up next</Text>
             <View style={styles.diffRow}>
               {(['easy', 'medium', 'hard'] as G.Difficulty[]).map((d) => (
                 <DifficultyButton
                   key={d}
                   d={d}
-                  isActive={d === difficulty}
-                  onPress={() => onNewGame(d)}
+                  isActive={d === nextDifficulty}
+                  onPress={() => setNextDifficulty(d)}
                 />
               ))}
             </View>
+
+            <Pressable
+              style={[styles.primaryBtn, primaryHovered && styles.primaryBtnHovered]}
+              onPress={() => onNewGame(nextDifficulty)}
+              {...primaryHoverProps}
+            >
+              <Text style={styles.primaryBtnText}>Start {nextDifficulty} puzzle</Text>
+              <Feather name="arrow-right" size={16} color="#fff" />
+            </Pressable>
+
+            <Pressable
+              style={styles.homeBtn}
+              onPress={() => router.replace('/')}
+              {...homeHoverProps}
+            >
+              <Text style={[styles.homeBtnText, homeHovered && styles.homeBtnTextHovered]}>
+                Back to home
+              </Text>
+            </Pressable>
           </View>
         </Animated.View>
       </View>
@@ -307,6 +323,28 @@ const styles = StyleSheet.create({
   actions: {
     width: '100%',
     gap: spacing.md,
+  },
+  actionsLabel: {
+    fontSize: 11,
+    fontFamily: fonts.semibold,
+    fontWeight: '600',
+    color: colors.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    textAlign: 'center',
+  },
+  homeBtn: {
+    alignItems: 'center',
+    paddingVertical: spacing.xs,
+  },
+  homeBtnText: {
+    fontSize: 13,
+    fontFamily: fonts.medium,
+    fontWeight: '500',
+    color: colors.textMuted,
+  },
+  homeBtnTextHovered: {
+    color: colors.textSecondary,
   },
   primaryBtn: {
     backgroundColor: colors.accent,
