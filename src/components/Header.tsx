@@ -46,7 +46,7 @@ function IconButton({
 }
 
 export function Header({ difficulty, time, mistakes, isPaused, onTogglePause }: Props) {
-  const { user, isAdmin, signOut } = useAuth();
+  const { user, signOut } = useAuth();
   const router = useRouter();
 
   const isLoggedIn = !!user;
@@ -75,7 +75,6 @@ export function Header({ difficulty, time, mistakes, isPaused, onTogglePause }: 
       </View>
 
       <View style={styles.right}>
-        {isAdmin && <IconButton icon="settings" onPress={() => router.push('/(game)/admin')} />}
         <IconButton
           icon={isLoggedIn ? 'log-out' : 'user'}
           onPress={() => (isLoggedIn ? signOut() : router.push('/(auth)/login'))}
