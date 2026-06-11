@@ -25,13 +25,17 @@ Pre-commit hooks run lint-staged (ESLint + Prettier) automatically on `.ts/.tsx/
 ### Routing (Expo Router — file-based)
 
 ```
-app/_layout.tsx       ← Root layout; wraps app in AuthProvider
-app/index.tsx         ← Splash/redirect: sends unauthenticated users to /(auth)/, others to /(game)/
+app/+html.tsx         ← Web HTML shell: viewport-fit=cover, dark bg, safe-area insets (static rendering)
+app/_layout.tsx       ← Root layout; loads Inter fonts, wraps app in AuthProvider
+app/index.tsx         ← Home: difficulty picker, continue card, best times (guest play allowed)
 app/(auth)/login.tsx
 app/(auth)/signup.tsx
-app/(game)/index.tsx  ← Main game screen
-app/(game)/admin.tsx  ← Admin panel (requires admin role from profile)
+app/(game)/play.tsx   ← Main game screen (/play?difficulty=easy|medium|hard&fresh=1)
 ```
+
+Web output is `static` (`app.json` → `web.output`) — every route is pre-rendered in
+Node at export time, so render-path code must not touch `window`/`sessionStorage`
+unguarded (effects and event handlers are fine).
 
 ### State layers
 
@@ -54,10 +58,11 @@ All functions here are dependency-free (no React):
 
 ### Supabase schema (tables)
 
-- `profiles` — user metadata including `is_admin` flag
+- `profiles` — user metadata including `role` (admin check)
 - `games` — saved game state per user (board as 36-char string)
 - `user_progress` — score records (`user_id`, `difficulty`, `time_seconds`)
-- `roadmap_items` — admin-managed roadmap entries
+- `roadmap_items` — roadmap entries; the old admin UI was removed but the table
+  is retained for a future admin panel (RLS: readable by admins only)
 
 Client is initialized in `lib/supabase.ts`.
 

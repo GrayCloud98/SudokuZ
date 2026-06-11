@@ -41,6 +41,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isGuest, setIsGuest] = useState<boolean>(() => {
+    // sessionStorage doesn't exist during static pre-rendering (Node)
+    if (typeof sessionStorage === 'undefined') return false;
     return sessionStorage.getItem('isGuest') === 'true';
   });
 

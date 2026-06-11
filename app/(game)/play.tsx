@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { View, Text, Pressable, StyleSheet, useWindowDimensions } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
+import Head from 'expo-router/head';
 import { Feather } from '@expo/vector-icons';
 import { SudokuBoard } from '@/components/SudokuBoard';
 import { NumberPad } from '@/components/NumberPad';
@@ -116,6 +117,9 @@ export default function GameScreen() {
 
   return (
     <View style={styles.container}>
+      <Head>
+        <title>Play · SudokuZ</title>
+      </Head>
       <Header
         difficulty={activeDifficulty}
         time={time}

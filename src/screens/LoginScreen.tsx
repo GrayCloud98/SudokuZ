@@ -9,6 +9,7 @@ import {
   StatusBar,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import Head from 'expo-router/head';
 import { Feather } from '@expo/vector-icons';
 import { useAuth } from '@/context/AuthContext';
 import { colors, spacing, radius } from '@/theme/theme';
@@ -63,6 +64,9 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.container}>
+      <Head>
+        <title>Sign in · SudokuZ</title>
+      </Head>
       <StatusBar barStyle="light-content" backgroundColor={colors.bg} />
 
       <TouchableOpacity style={styles.backBtn} onPress={() => router.replace('/')}>
