@@ -114,7 +114,7 @@ function TopBarButton({ label, onPress }: { label: string; onPress: () => void }
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { user, isGuest, isAdmin, signOut, continueAsGuest } = useAuth();
+  const { user, isGuest, signOut, continueAsGuest } = useAuth();
 
   const [savedDifficulty, setSavedDifficulty] = useState<Difficulty | null>(null);
   const [bestTimes, setBestTimes] = useState<Partial<Record<Difficulty, number>>>({});
@@ -188,7 +188,6 @@ export default function HomeScreen() {
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.column}>
           <View style={styles.topBar}>
-            {isAdmin && <TopBarButton label="Admin" onPress={() => router.push('/(game)/admin')} />}
             <View style={{ flex: 1 }} />
             {displayName && <Text style={styles.topBarName}>{displayName}</Text>}
             <TopBarButton
