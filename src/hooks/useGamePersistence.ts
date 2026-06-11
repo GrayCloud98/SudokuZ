@@ -10,6 +10,8 @@ interface UsePersistenceArgs {
   board: Board;
   difficulty: Difficulty;
   isSolved: boolean;
+  /** When false, skip restoring the saved game (e.g. the user explicitly started a new one). */
+  loadSaved?: boolean;
   loadGame: (puzzle: Board, solution: Board, board: Board, difficulty: Difficulty) => void;
 }
 
@@ -21,6 +23,7 @@ export function useGamePersistence({
   board,
   difficulty,
   isSolved,
+  loadSaved = true,
   loadGame,
 }: UsePersistenceArgs) {
   const { user } = useAuth();
@@ -30,7 +33,7 @@ export function useGamePersistence({
 
   // load saved game on mount, runs once per session
   useEffect(() => {
-    if (!user || hasLoaded.current) return;
+    if (!user || !loadSaved || hasLoaded.current) return;
     hasLoaded.current = true;
 
     async function loadSavedGame() {

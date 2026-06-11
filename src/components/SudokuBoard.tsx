@@ -7,6 +7,7 @@ import { colors } from '../theme/theme';
 interface Props {
   gameBoard: B.GameBoard;
   selectedCell: [number, number] | null;
+  cellSize: number;
   onCellPress: (row: number, col: number) => void;
 }
 
@@ -17,7 +18,7 @@ function isInSameBox(r: number, c: number, sr: number, sc: number): boolean {
   );
 }
 
-export function SudokuBoard({ gameBoard, selectedCell, onCellPress }: Props) {
+export function SudokuBoard({ gameBoard, selectedCell, cellSize, onCellPress }: Props) {
   const selectedValue =
     selectedCell != null ? gameBoard.values[selectedCell[0]][selectedCell[1]] : B.EMPTY;
 
@@ -45,6 +46,7 @@ export function SudokuBoard({ gameBoard, selectedCell, onCellPress }: Props) {
               <SudokuCell
                 key={c}
                 value={value}
+                size={cellSize}
                 notes={gameBoard.meta[r][c].notes}
                 isSelected={isSelected}
                 isHighlighted={isHighlighted}
@@ -66,8 +68,9 @@ const styles = StyleSheet.create({
   board: {
     borderWidth: 2,
     borderColor: colors.borderOuter,
-    borderRadius: 4,
+    borderRadius: 8,
     overflow: 'hidden',
+    boxShadow: '0 16px 48px rgba(0,0,0,0.4), 0 0 0 1px rgba(59,130,246,0.06)',
   },
   row: {
     flexDirection: 'row',

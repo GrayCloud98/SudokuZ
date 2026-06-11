@@ -4,6 +4,7 @@ import * as V from '../logic/validator';
 import * as G from '../logic/generator';
 
 const UNDO_LIMIT = 30;
+export const HINT_LIMIT = 3;
 
 interface GameState {
   gameBoard: B.GameBoard;
@@ -14,6 +15,7 @@ interface GameState {
   difficulty: G.Difficulty;
   notesMode: boolean;
   mistakes: number;
+  hintsRemaining: number;
   history: B.GameBoard[];
 }
 
@@ -52,6 +54,7 @@ function buildInitialState(difficulty: G.Difficulty): GameState {
     difficulty,
     notesMode: false,
     mistakes: 0,
+    hintsRemaining: HINT_LIMIT,
     history: [],
   };
 }
@@ -169,7 +172,7 @@ function reducer(state: GameState, action: Action): GameState {
     }
 
     case 'hint': {
-      if (state.isSolved) return state;
+      if (state.isSolved || state.hintsRemaining <= 0) return state;
       // Find an empty non-given cell that we can reveal
       const candidates: [number, number][] = [];
       for (let r = 0; r < B.GRID_SIZE; r++) {
@@ -202,6 +205,7 @@ function reducer(state: GameState, action: Action): GameState {
         history: pushHistory(state.history, state.gameBoard),
         gameBoard: { values: newValues, meta: updatedMeta },
         isSolved,
+        hintsRemaining: state.hintsRemaining - 1,
         selectedCell: [row, col],
       };
     }
@@ -235,6 +239,7 @@ export function useGameState(initialDifficulty: G.Difficulty = 'medium') {
     difficulty: state.difficulty,
     notesMode: state.notesMode,
     mistakes: state.mistakes,
+    hintsRemaining: state.hintsRemaining,
     canUndo: state.history.length > 0,
     selectCell: (row: number, col: number) => dispatch({ type: 'selectCell', row, col }),
     placeNumber: (value: B.CellValue) => dispatch({ type: 'placeNumber', value }),
