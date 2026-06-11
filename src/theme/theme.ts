@@ -1,3 +1,21 @@
+import { Platform } from 'react-native';
+
+/** Native driver is unavailable on react-native-web; JS fallback warns loudly. */
+export const USE_NATIVE_DRIVER = Platform.OS !== 'web';
+
+/**
+ * Inter is loaded app-wide in app/_layout.tsx via expo-font.
+ * RN maps weights through explicit family names, so text styles should set
+ * BOTH fontFamily (from here) and the matching fontWeight (for web CSS).
+ */
+export const fonts = {
+  regular: 'Inter_400Regular',
+  medium: 'Inter_500Medium',
+  semibold: 'Inter_600SemiBold',
+  bold: 'Inter_700Bold',
+  extrabold: 'Inter_800ExtraBold',
+} as const;
+
 export const colors = {
   bg: '#0f172a',
   surface: '#1e293b',
